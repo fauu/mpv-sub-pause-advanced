@@ -1,100 +1,15 @@
-local options = {
-  setup = ""
-}
-require("mp.options").read_options(options, "sub-pause")
-
-local cfg = {}
-
-local state = {}
-
 local UnpauseMode = {
   TEXT = 1,
   TIME = 2,
 }
 
-local function parse_cfg()
-  local new_cfg = {
-    sub_end_delta = 0.1
-  }
+local options = {
+  setup = ""
+}
+local cfg = {}
+local state = {}
 
-  for part in string.gmatch(options.setup, "[%w%_-%!%.]+") do
-    local c = {
-      on_request = false,
-      replay = false,
-      unpause = false,
-      unpause_mode = UnpauseMode.TEXT,
-      unpause_scale = 1,
-      ignore_sign_subs = false,
-    }
-
-    local segs = part:gmatch("[^%!]+")
-
-    -- Parse first seg
-    local first_seg = segs()
-    local sub_track = 1
-    if first_seg:find("2", 1) then
-      sub_track = 2
-    end
-    local sub_pos = first_seg:gmatch("%d?(.+)")()
-    if sub_pos ~= "start" and sub_pos ~= "end" then
-      goto skip
-    end
-
-    if new_cfg[sub_track] == nil then
-      new_cfg[sub_track] = {
-        hide_while_playing = false
-      }
-    end
-
-    -- Parse rest segs
-    for seg in segs do
-      local subsegs = seg:gmatch("[^-]+")
-      local main = subsegs()
-      if main == "request" and sub_pos == "end" then
-        c.on_request = true
-        if subsegs() == "replay" then
-          c.replay = true
-        end
-      elseif main == "unpause" then
-        c.unpause = true
-        for arg in subsegs do
-          if arg == "time" then
-            c.unpause_mode = UnpauseMode.TIME
-          else
-            local numarg = tonumber(arg)
-            if numarg ~= nil then
-              c.unpause_scale = numarg
-            end
-          end
-        end
-      elseif main == "hide" then
-        new_cfg[sub_track].hide_while_playing = true
-      elseif main == "nosign" and sub_track == 1 then
-        c.ignore_sign_subs = true
-      end
-    end
-
-    new_cfg[sub_track][sub_pos] = c
-
-    ::skip::
-  end
-
-  return new_cfg
-end
-
-local function sub_track_property(sub_track, property_base)
-  local property = property_base
-  if sub_track == 2 then
-    property = "secondary-" .. property
-  end
-  return property
-end
-
-local function for_each_sub_track(cb)
-  for sub_track=1,2 do
-    cb(sub_track)
-  end
-end
+--- CONFIG UTILITIES -----------------------------------------------------------------------------------
 
 local function sub_track_cfg(sub_track, sub_pos, key)
   local track_cfg = cfg[sub_track]
@@ -118,10 +33,40 @@ local function sub_track_cfg(sub_track, sub_pos, key)
   return track_pos_cfg[key]
 end
 
+--- SUB TRACK UTILITIES ----------------------------------------------------------------------------
+
+local function sub_track_property(sub_track, property_base)
+  local property = property_base
+  if sub_track == 2 then
+    property = "secondary-" .. property
+  end
+  return property
+end
+
+local function for_each_sub_track(cb)
+  for sub_track=1,2 do
+    cb(sub_track)
+  end
+end
+
+--- SUB TEXT UTILITIES -----------------------------------------------------------------------------
+
 local function sub_text_length(text)
   local _, len = string.gsub(text, "[^\128-\193]", "")
   return len
 end
+
+local function suspected_sign_sub(ass_text)
+  -- Consider as sign sub only if *all* lines have ASS escape sequences.
+  for line in ass_text:gmatch("[^\r\n]+") do
+    if not line:find("%{%\\%a") then
+      return false
+    end
+  end
+  return true
+end
+
+--- VARIOUS SUB UTILITIES --------------------------------------------------------------------------
 
 local function set_sub_visibility(sub_track, visible)
   -- NOTE: Limitation: Hiding primary sub also hides secondary sub
@@ -134,6 +79,8 @@ local function seek_to_sub_start(sub_track)
     mp.set_property("time-pos", sub_start + mp.get_property_number("sub-delay"))
   end
 end
+
+--- PAUSE/UNPAUSE FUNCTIONS ------------------------------------------------------------------------
 
 local function start_pause_duration(sub_track, mode, scale)
   local sub_start = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
@@ -191,16 +138,6 @@ local function unpause_after(duration)
   state.unpause_timer = mp.add_timeout(duration, unpause)
 end
 
-local function suspected_sign_sub(ass_text)
-  -- Consider as sign sub only if *all* lines have ASS escape sequences.
-  for line in ass_text:gmatch("[^\r\n]+") do
-    if not line:find("%{%\\%a") then
-      return false
-    end
-  end
-  return true
-end
-
 local function should_skip_because_sign_sub(part_cfg)
   return part_cfg.ignore_sign_subs and suspected_sign_sub(mp.get_property("sub-text-ass"))
 end
@@ -212,6 +149,8 @@ local function pause_and_unpause(sub_track, part_cfg)
     unpause_after(pause_duration)
   end
 end
+
+--- CORE EVENTS -----------------------------------------------------------------------------------
 
 local function handle_sub_end_time(sub_track, sub_end_time)
   if sub_end_time == nil then
@@ -307,10 +246,7 @@ local function handle_time_pos(_, time_pos)
   end)
 end
 
-local function replay_sub(sub_track)
-  seek_to_sub_start(sub_track)
-  unpause()
-end
+--- SECONDARY EVENTS -------------------------------------------------------------------------------
 
 -- XXX: Pauses immediately if in between subs
 local function handle_request_pause_pressed(info)
@@ -336,6 +272,15 @@ local function handle_request_pause_pressed(info)
     end
   end
 end
+
+--- CORE FUNCTIONS ---------------------------------------------------------------------------------
+
+local function replay_sub(sub_track)
+  seek_to_sub_start(sub_track)
+  unpause()
+end
+
+--- INIT/DEINIT ------------------------------------------------------------------------------------
 
 local function init_state()
   state = {
@@ -416,6 +361,80 @@ local function handle_toggle()
   mp.osd_message("Subtitle pause " .. state_str, 3)
 end
 
+--- CONFIG PARSE -----------------------------------------------------------------------------------
+
+local function parse_cfg()
+  local new_cfg = {
+    sub_end_delta = 0.1
+  }
+
+  for part in string.gmatch(options.setup, "[%w%_-%!%.]+") do
+    local c = {
+      on_request = false,
+      replay = false,
+      unpause = false,
+      unpause_mode = UnpauseMode.TEXT,
+      unpause_scale = 1,
+      ignore_sign_subs = false,
+    }
+
+    local segs = part:gmatch("[^%!]+")
+
+    -- Parse first seg
+    local first_seg = segs()
+    local sub_track = 1
+    if first_seg:find("2", 1) then
+      sub_track = 2
+    end
+    local sub_pos = first_seg:gmatch("%d?(.+)")()
+    if sub_pos ~= "start" and sub_pos ~= "end" then
+      goto skip
+    end
+
+    if new_cfg[sub_track] == nil then
+      new_cfg[sub_track] = {
+        hide_while_playing = false
+      }
+    end
+
+    -- Parse rest segs
+    for seg in segs do
+      local subsegs = seg:gmatch("[^-]+")
+      local main = subsegs()
+      if main == "request" and sub_pos == "end" then
+        c.on_request = true
+        if subsegs() == "replay" then
+          c.replay = true
+        end
+      elseif main == "unpause" then
+        c.unpause = true
+        for arg in subsegs do
+          if arg == "time" then
+            c.unpause_mode = UnpauseMode.TIME
+          else
+            local numarg = tonumber(arg)
+            if numarg ~= nil then
+              c.unpause_scale = numarg
+            end
+          end
+        end
+      elseif main == "hide" then
+        new_cfg[sub_track].hide_while_playing = true
+      elseif main == "nosign" and sub_track == 1 then
+        c.ignore_sign_subs = true
+      end
+    end
+
+    new_cfg[sub_track][sub_pos] = c
+
+    ::skip::
+  end
+
+  return new_cfg
+end
+
+--- MAIN ------------------------------------------------------------------------------------------
+
 local function debug_dump(o)
   if type(o) == "table" then
     local s = "{ "
@@ -423,7 +442,7 @@ local function debug_dump(o)
       if type(k) ~= "number" then
         k = '"' .. k.. '"'
       end
-      s = s .. "[" .. k .. "] = " .. debug_dump(v) .. "."
+      s = s .. "[" .. k .. "] = " .. debug_dump(v) .. ","
     end
     return s .. "} "
   else
@@ -432,6 +451,7 @@ local function debug_dump(o)
 end
 
 local function main()
+  require("mp.options").read_options(options, "sub-pause")
   cfg = parse_cfg()
   print(debug_dump(cfg))
   init_state()
