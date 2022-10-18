@@ -8,6 +8,10 @@ local options = {
   ["min-sub-duration"] = 1,
   ["min-sub-text-length"] = 5, -- NOTE: Only in effect if length > `0`
   ["min-pause-duration"] = 0.5,
+  ["autounpause-base"] = 0.4,
+  ["autounpause-text-multiplier"] = 0.003,
+  ["autounpause-time-multiplier"] = 0.6,
+  ["autounpause-exponent"] = 1.25,
 }
 local cfg = {}
 local state = {}
@@ -86,14 +90,13 @@ end
 --- PAUSE/UNPAUSE FUNCTIONS ------------------------------------------------------------------------
 
 local function start_pause_duration(sub_track, mode, scale)
-  local unscaled = 0
-  local base = 0.4 -- TODO: Constants
+  local unscaled = cfg.autounpause_base_secs
   if mode == UnpauseMode.TEXT then
     local text_length = state.curr_sub_text_length[sub_track]
-    unscaled = base + (0.003 * (text_length * (text_length / 4)))
+    unscaled = unscaled + cfg.autounpause_text_multiplier * text_length^cfg.autounpause_exponent
   elseif mode == UnpauseMode.TIME then
     local time_length = state.curr_sub_time_length[sub_track]
-    unscaled = base + (0.6 * (time_length * (time_length / 4)))
+    unscaled = unscaled + cfg.autounpause_time_multiplier * time_length^cfg.autounpause_exponent
   end
   return scale * unscaled
 end
@@ -385,6 +388,10 @@ local function parse_cfg()
     min_sub_time_length_sec = options["min-sub-duration"],
     min_sub_text_length = options["min-sub-text-length"],
     min_pause_duration_secs = options["min-pause-duration"],
+    autounpause_base_secs = options["autounpause-base"],
+    autounpause_text_multiplier = options["autounpause-text-multiplier"],
+    autounpause_time_multiplier = options["autounpause-time-multiplier"],
+    autounpause_exponent = options["autounpause-exponent"],
   }
 
   for part in string.gmatch(options.setup, "[%w%_-%!%.]+") do
