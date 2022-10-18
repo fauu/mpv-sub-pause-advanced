@@ -9,9 +9,9 @@ local options = {
   ["min-sub-text-length"] = 5, -- NOTE: Only in effect if length > `0`
   ["min-pause-duration"] = 0.5,
   ["unpause-base"] = 0.4,
-  ["unpause-text-multiplier"] = 0.003,
-  ["unpause-time-multiplier"] = 0.6,
-  ["unpause-exponent"] = 1.25,
+  ["unpause-text-multiplier"] = 0.0015,
+  ["unpause-time-multiplier"] = 0.15,
+  ["unpause-exponent"] = 1.8,
 }
 local cfg = {}
 local state = {}
@@ -105,10 +105,10 @@ local function start_pause_duration(sub_track, mode, scale)
   local unscaled = cfg.unpause_base_secs
   if mode == UnpauseMode.TEXT then
     local text_length = state.curr_sub_text_length[sub_track]
-    unscaled = unscaled + cfg.unpause_text_multiplier * text_length^cfg.unpause_exponent
+    unscaled = unscaled + (cfg.unpause_text_multiplier * text_length^cfg.unpause_exponent)
   elseif mode == UnpauseMode.TIME then
     local time_length = state.curr_sub_time_length[sub_track]
-    unscaled = unscaled + cfg.unpause_time_multiplier * time_length^cfg.unpause_exponent
+    unscaled = unscaled + (cfg.unpause_time_multiplier * time_length^cfg.unpause_exponent)
   end
   return scale * unscaled
 end
