@@ -264,27 +264,23 @@ end
 
 --- SECONDARY EVENTS -------------------------------------------------------------------------------
 
--- XXX: Pauses immediately if in between subs
-local function handle_request_pause_pressed(info)
-  local down = info.event == "down"
-  if down then
-    if mp.get_property_bool("pause") then
-      unpause()
-    elseif not state.enabled then
+local function handle_request_pause_pressed()
+  if mp.get_property_bool("pause") then
+    unpause()
+  elseif not state.enabled then
+    pause()
+  else
+    state.pause_at_sub_end = {
+      sub_track_cfg(1, "end", "on_request") or false,
+      sub_track_cfg(2, "end", "on_request") or false,
+    }
+    if not state.pause_at_sub_end[1] and not state.pause_at_sub_end[2] then
       pause()
     else
-      state.pause_at_sub_end = {
-        sub_track_cfg(1, "end", "on_request") or false,
-        sub_track_cfg(2, "end", "on_request") or false,
+      state.replay_on_unpause = {
+        sub_track_cfg(1, "end", "replay") or false,
+        sub_track_cfg(2, "end", "replay") or false,
       }
-      if not state.pause_at_sub_end[1] and not state.pause_at_sub_end[2] then
-        pause()
-      else
-        state.replay_on_unpause = {
-          sub_track_cfg(1, "end", "replay") or false,
-          sub_track_cfg(2, "end", "replay") or false,
-        }
-      end
     end
   end
 end
@@ -485,13 +481,7 @@ local function main()
   mp.observe_property("current-tracks/sub/id", "number", handle_primary_sub_track)
   mp.add_key_binding("n", "toggle", handle_toggle)
 
-  -- XXX: Disable complex if not needed
-  mp.add_forced_key_binding(
-    "MBTN_RIGHT",
-    "request-pause",
-    handle_request_pause_pressed,
-    {complex = true}
-  )
+  mp.add_forced_key_binding("MBTN_RIGHT", "request-pause", handle_request_pause_pressed)
 
   mp.add_key_binding("Ctrl+r", "replay", function() replay_sub(1) end)
   mp.add_key_binding(nil, "replay-secondary", function() replay_sub(2) end)
