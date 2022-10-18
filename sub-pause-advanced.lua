@@ -59,7 +59,7 @@ end
 --- SUB TEXT UTILITIES -----------------------------------------------------------------------------
 
 local function calculate_sub_text_length(text)
-  local _, len = string.gsub(text, "[^\128-\193]", "")
+  local _, len = text:gsub("[^\128-\193]", "")
   return len
 end
 
@@ -394,7 +394,7 @@ local function parse_cfg()
     unpause_exponent = options["unpause-exponent"],
   }
 
-  for part in string.gmatch(options.setup, "[%w%_-%!%.]+") do
+  for part in options.setup:gmatch("[%w%_-%!%.]+") do
     local c = {
       on_request = false,
       replay = false,
