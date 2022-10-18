@@ -63,13 +63,26 @@ local function calculate_sub_text_length(text)
   return len
 end
 
+local special_ass_codes = {"pos", "move", "kf", "fad"}
+
+local function has_special_ass_code(s)
+  for _, c in pairs(special_ass_codes) do
+    -- PERF: Pre-create the patterns
+    if s:find("%\\" .. c) then
+      return true
+    end
+  end
+  return false
+end
+
 local function suspected_special_sub(ass_text)
-  -- Consider as special sub only if *all* lines have ASS escape sequences.
+  -- Consider as special sub only if *all* lines have certain ASS codes
   for line in ass_text:gmatch("[^\r\n]+") do
-    if not line:find("%{%\\%a") then
+    if not has_special_ass_code(line) then
       return false
     end
   end
+  print("SKIPPED SPECIAL SUB")
   return true
 end
 
