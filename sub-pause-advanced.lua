@@ -4,7 +4,8 @@ local UnpauseMode = {
 }
 
 local options = {
-  setup = ""
+  setup = "",
+  ["min-time"] = 1,
 }
 local cfg = {}
 local state = {}
@@ -87,15 +88,6 @@ end
 --- PAUSE/UNPAUSE FUNCTIONS ------------------------------------------------------------------------
 
 local function start_pause_duration(sub_track, mode, scale)
-  local sub_start = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
-  local sub_end = mp.get_property_number(sub_track_property(sub_track, "sub-end"))
-  if not sub_start or not sub_end then
-    return 0 end
-
-  local time_length = sub_end - sub_start
-  if time_length < 0.2 then -- XXX: Configurable how
-    return 0
-  end
   local unscaled = 0
   local base = 0.4 -- TODO: Constants
   if mode == UnpauseMode.TEXT then
@@ -106,6 +98,7 @@ local function start_pause_duration(sub_track, mode, scale)
     end
     unscaled = base + (0.003 * (text_length * (text_length / 4)))
   elseif mode == UnpauseMode.TIME then
+    local time_length = state.curr_sub_time_length[sub_track]
     unscaled = base + (0.6 * (time_length * (time_length / 4)))
   end
   return scale * unscaled
@@ -154,7 +147,8 @@ end
 
 -- QUAL: Join this with `pause()` and rename the current `pause()` to `do_pause()`
 local function pause_and_unpause(sub_track, sub_pos, part_cfg)
-  local pause_duration = start_pause_duration(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
+  local pause_duration =
+    start_pause_duration(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
   if pause_duration > 0.1 then -- TODO: Constant
     pause(sub_track, sub_pos)
     unpause_after(pause_duration)
@@ -164,7 +158,7 @@ end
 --- CORE EVENTS -----------------------------------------------------------------------------------
 
 local function handle_sub_end_time(sub_track, sub_end_time)
-  if sub_end_time == nil then
+  if not sub_end_time then
     return
   end
   if sub_end_time == state.curr_sub_end[sub_track] then
@@ -172,6 +166,20 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     return
   end
 
+  state.curr_sub_end[sub_track] = sub_end_time
+
+  -- Skip if sub too short in terms of time
+  local sub_start_time = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
+  if not sub_start_time then
+    return
+  end
+  local sub_time_length = sub_end_time - sub_start_time
+  if sub_time_length < cfg.min_time_length_sec then
+    return
+  end
+  state.curr_sub_time_length[sub_track] = sub_time_length
+
+  -- Handle start pause
   local cfg_start = sub_track_cfg(sub_track, "start")
   if cfg_start ~= nil then
     if should_skip_because_sign_sub(cfg_start) then
@@ -187,6 +195,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     ::skip::
   end
 
+  -- Handle end pause
   local cfg_end = sub_track_cfg(sub_track, "end")
   if cfg_end ~= nil then
     if cfg_end.on_request then
@@ -200,8 +209,6 @@ local function handle_sub_end_time(sub_track, sub_end_time)
 
     ::skip::
   end
-
-  state.curr_sub_end[sub_track] = sub_end_time
 end
 
 local function handle_sub_end_reached(sub_track)
@@ -312,6 +319,7 @@ local function init_state()
     enabled = false,
     unpause_timer = nil,
     curr_sub_end = {nil, nil},
+    curr_sub_time_length = {nil, nil},
     last_pause_time_pos = {nil, nil},
     last_pause_sub_pos = {nil, nil},
 
@@ -328,6 +336,7 @@ local function reset_state()
   state.enabled = false
   state.unpause_timer = nil
   state.curr_sub_end = {nil, nil}
+  state.curr_sub_time_length = {nil, nil}
   state.last_pause_time_pos = {nil, nil}
   state.last_pause_sub_pos = {nil, nil}
   state.pause_at_sub_end = {false, false}
@@ -395,7 +404,8 @@ end
 
 local function parse_cfg()
   local new_cfg = {
-    sub_end_delta = 0.1
+    sub_end_delta = 0.1,
+    min_time_length_sec = options["min-time"],
   }
 
   for part in string.gmatch(options.setup, "[%w%_-%!%.]+") do
