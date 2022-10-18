@@ -217,9 +217,9 @@ local function handle_sub_end_reached(sub_track)
 
   state.pause_at_sub_end[sub_track] = false
 
-  local cfgend = sub_track_cfg(sub_track, "end")
-  if cfgend.unpause then
-    pause_wait_unpause(sub_track, cfgend)
+  local cfg_end = sub_track_cfg(sub_track, "end")
+  if cfg_end.unpause then
+    pause_wait_unpause(sub_track, cfg_end)
   else
     pause(sub_track)
   end
