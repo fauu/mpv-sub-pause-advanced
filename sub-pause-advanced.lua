@@ -82,7 +82,6 @@ local function suspected_special_sub(ass_text)
       return false
     end
   end
-  print("SKIPPED SPECIAL SUB")
   return true
 end
 
@@ -148,7 +147,8 @@ local function unpause_after(duration)
 end
 
 local function should_skip_because_special_sub(part_cfg)
-  return part_cfg.ignore_special_subs and suspected_special_sub(mp.get_property("sub-text-ass"))
+  return not part_cfg.consider_special_subs
+    and suspected_special_sub(mp.get_property("sub-text-ass"))
 end
 
 local function pause_wait_unpause(sub_track, part_cfg)
@@ -414,7 +414,7 @@ local function parse_cfg()
       unpause = false,
       unpause_mode = UnpauseMode.TEXT,
       unpause_scale = 1,
-      ignore_special_subs = false,
+      consider_special_subs = false,
     }
 
     local segs = part:gmatch("[^%!]+")
@@ -463,8 +463,8 @@ local function parse_cfg()
         if subsegs() == "more" and sub_track == 2 then
           new_cfg[sub_track].hide_also_while_paused_for_other_track = true
         end
-      elseif main == "nospecial" and sub_track == 1 then
-        c.ignore_special_subs = true
+      elseif main == "special" and sub_track == 1 then
+        c.consider_special_subs = true
       end
     end
 
