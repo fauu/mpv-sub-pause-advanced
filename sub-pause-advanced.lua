@@ -110,10 +110,12 @@ end
 local function pause(for_sub_track)
   mp.set_property_bool("pause", true)
   for_each_sub_track(function (track)
-    if track == for_sub_track then
-      if sub_track_cfg(track, nil, "hide_while_playing") then
+    if sub_track_cfg(track, nil, "hide_while_playing")
+      and not (
+        track ~= for_sub_track
+        and sub_track_cfg(track, nil, "hide_also_while_paused_for_other_track")
+      ) then
         set_sub_visibility(track, true)
-      end
     end
   end)
 end
@@ -393,7 +395,8 @@ local function parse_cfg()
 
     if new_cfg[sub_track] == nil then
       new_cfg[sub_track] = {
-        hide_while_playing = false
+        hide_while_playing = false,
+        hide_also_while_paused_for_other_track = false,
       }
     end
 
@@ -420,6 +423,9 @@ local function parse_cfg()
         end
       elseif main == "hide" then
         new_cfg[sub_track].hide_while_playing = true
+        if subsegs() == "more" and sub_track == 2 then
+          new_cfg[sub_track].hide_also_while_paused_for_other_track = true
+        end
       elseif main == "nosign" and sub_track == 1 then
         c.ignore_sign_subs = true
       end
