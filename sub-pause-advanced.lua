@@ -5,7 +5,9 @@ local UnpauseMode = {
 
 local options = {
   setup = "",
-  ["min-time"] = 1,
+  ["min-sub-duration"] = 1,
+  ["min-sub-text-length"] = 5, -- NOTE: Only in effect if length > `0`
+  ["min-pause-duration"] = 0.5,
 }
 local cfg = {}
 local state = {}
@@ -52,7 +54,7 @@ end
 
 --- SUB TEXT UTILITIES -----------------------------------------------------------------------------
 
-local function sub_text_length(text)
+local function calculate_sub_text_length(text)
   local _, len = string.gsub(text, "[^\128-\193]", "")
   return len
 end
@@ -87,11 +89,7 @@ local function start_pause_duration(sub_track, mode, scale)
   local unscaled = 0
   local base = 0.4 -- TODO: Constants
   if mode == UnpauseMode.TEXT then
-    local sub_text = mp.get_property(sub_track_property(sub_track, "sub-text"))
-    local text_length = sub_text_length(sub_text)
-    if text_length < 5 then --- XXX: Configurable how
-      return 0
-    end
+    local text_length = state.curr_sub_text_length[sub_track]
     unscaled = base + (0.003 * (text_length * (text_length / 4)))
   elseif mode == UnpauseMode.TIME then
     local time_length = state.curr_sub_time_length[sub_track]
@@ -137,10 +135,10 @@ local function should_skip_because_sign_sub(part_cfg)
   return part_cfg.ignore_sign_subs and suspected_sign_sub(mp.get_property("sub-text-ass"))
 end
 
-local function pause_and_unpause(sub_track, part_cfg)
+local function pause_wait_unpause(sub_track, part_cfg)
   local pause_duration =
     start_pause_duration(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
-  if pause_duration > 0.1 then -- TODO: Constant
+  if pause_duration >= cfg.min_pause_duration_secs then
     pause(sub_track)
     unpause_after(pause_duration)
   end
@@ -159,16 +157,23 @@ local function handle_sub_end_time(sub_track, sub_end_time)
 
   state.curr_sub_end[sub_track] = sub_end_time
 
-  -- Skip if sub too short in terms of time
+  -- Skip if sub too short in terms of both time and text length
   local sub_start_time = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
   if not sub_start_time then
     return
   end
   local sub_time_length = sub_end_time - sub_start_time
-  if sub_time_length < cfg.min_time_length_sec then
+  if sub_time_length < cfg.min_sub_time_length_sec then
     return
   end
   state.curr_sub_time_length[sub_track] = sub_time_length
+  local sub_text_length =
+    calculate_sub_text_length(mp.get_property(sub_track_property(sub_track, "sub-text")))
+  -- Ignore `0`, since image-based subs have the length of `0`
+  if sub_text_length > 0 and sub_text_length < cfg.min_sub_text_length then
+    return
+  end
+  state.curr_sub_text_length[sub_track] = sub_text_length
 
   -- Handle start pause
   local cfg_start = sub_track_cfg(sub_track, "start")
@@ -178,7 +183,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     end
 
     if cfg_start.unpause then
-      pause_and_unpause(sub_track, cfg_start)
+      pause_wait_unpause(sub_track, cfg_start)
     else
       pause(sub_track)
     end
@@ -211,7 +216,7 @@ local function handle_sub_end_reached(sub_track)
 
   local cfgend = sub_track_cfg(sub_track, "end")
   if cfgend.unpause then
-    pause_and_unpause(sub_track, cfgend)
+    pause_wait_unpause(sub_track, cfgend)
   else
     pause(sub_track)
   end
@@ -314,6 +319,7 @@ local function reset_state()
   state.unpause_timer = nil
   state.curr_sub_end = {nil, nil}
   state.curr_sub_time_length = {nil, nil}
+  state.curr_sub_text_length = {nil, nil}
   state.pause_at_sub_end = {false, false}
   state.replay_on_unpause = {false, false}
 end
@@ -380,7 +386,9 @@ end
 local function parse_cfg()
   local new_cfg = {
     sub_end_delta = 0.1,
-    min_time_length_sec = options["min-time"],
+    min_sub_time_length_sec = options["min-sub-duration"],
+    min_sub_text_length = options["min-sub-text-length"],
+    min_pause_duration_secs = options["min-pause-duration"],
   }
 
   for part in string.gmatch(options.setup, "[%w%_-%!%.]+") do
