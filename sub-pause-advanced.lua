@@ -76,6 +76,9 @@ local function has_special_ass_code(s)
 end
 
 local function suspected_special_sub(ass_text)
+  if #ass_text == 0 then
+    return false
+  end
   -- Consider as special sub only if *all* lines have certain ASS codes
   for line in ass_text:gmatch("[^\r\n]+") do
     if not has_special_ass_code(line) then
