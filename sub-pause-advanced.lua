@@ -63,8 +63,8 @@ local function calculate_sub_text_length(text)
   return len
 end
 
-local function suspected_sign_sub(ass_text)
-  -- Consider as sign sub only if *all* lines have ASS escape sequences.
+local function suspected_special_sub(ass_text)
+  -- Consider as special sub only if *all* lines have ASS escape sequences.
   for line in ass_text:gmatch("[^\r\n]+") do
     if not line:find("%{%\\%a") then
       return false
@@ -134,8 +134,8 @@ local function unpause_after(duration)
   state.unpause_timer = mp.add_timeout(duration, unpause)
 end
 
-local function should_skip_because_sign_sub(part_cfg)
-  return part_cfg.ignore_sign_subs and suspected_sign_sub(mp.get_property("sub-text-ass"))
+local function should_skip_because_special_sub(part_cfg)
+  return part_cfg.ignore_special_subs and suspected_special_sub(mp.get_property("sub-text-ass"))
 end
 
 local function pause_wait_unpause(sub_track, part_cfg)
@@ -181,7 +181,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
   -- Handle start pause
   local cfg_start = sub_track_cfg(sub_track, "start")
   if cfg_start ~= nil then
-    if should_skip_because_sign_sub(cfg_start) then
+    if should_skip_because_special_sub(cfg_start) then
       goto skip
     end
 
@@ -200,7 +200,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     if cfg_end.on_request then
       goto skip
     end
-    if should_skip_because_sign_sub(cfg_end) then
+    if should_skip_because_special_sub(cfg_end) then
       goto skip
     end
 
@@ -401,7 +401,7 @@ local function parse_cfg()
       unpause = false,
       unpause_mode = UnpauseMode.TEXT,
       unpause_scale = 1,
-      ignore_sign_subs = false,
+      ignore_special_subs = false,
     }
 
     local segs = part:gmatch("[^%!]+")
@@ -450,8 +450,8 @@ local function parse_cfg()
         if subsegs() == "more" and sub_track == 2 then
           new_cfg[sub_track].hide_also_while_paused_for_other_track = true
         end
-      elseif main == "nosign" and sub_track == 1 then
-        c.ignore_sign_subs = true
+      elseif main == "nospecial" and sub_track == 1 then
+        c.ignore_special_subs = true
       end
     end
 
