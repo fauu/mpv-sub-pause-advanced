@@ -353,13 +353,14 @@ local function handle_toggle()
   if state.enabled then
     -- Disable
     deinit()
+    state.enabled = false
     state_str = "off"
   else
     -- Enable
     init()
+    state.enabled = true -- NOTE: Don't move this outside the condition
     state_str = "on"
   end
-  state.enabled = not state.enabled
   mp.osd_message("Subtitle pause " .. state_str, 3)
 end
 
