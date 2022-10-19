@@ -76,7 +76,7 @@ local function has_special_ass_code(s)
 end
 
 local function suspected_special_sub(ass_text)
-  if #ass_text == 0 then
+  if not ass_text or #ass_text == 0 then
     return false
   end
   -- Consider as special sub only if *all* lines have certain ASS codes
