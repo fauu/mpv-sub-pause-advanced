@@ -183,6 +183,10 @@ local function handle_sub_end_time(sub_track, sub_end_time)
   end
   local sub_time_length = sub_end_time - sub_start_time
   if sub_time_length < cfg.min_sub_time_length_sec then
+    -- NOTE: We need to reveal when skipping, because otherwise having "hide while playing" enabled
+    --       would mean that the sub is never displayed
+    -- TODO: Honor manual visibility changes?
+    set_sub_visibility(sub_track, true)
     return
   end
   state.curr_sub_time_length[sub_track] = sub_time_length
@@ -190,6 +194,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     calculate_sub_text_length(mp.get_property(sub_track_property(sub_track, "sub-text")))
   -- Ignore `0`, since image-based subs have the length of `0`
   if sub_text_length > 0 and sub_text_length < cfg.min_sub_text_length then
+    set_sub_visibility(sub_track, true)
     return
   end
   state.curr_sub_text_length[sub_track] = sub_text_length
@@ -198,6 +203,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
   local cfg_start = sub_track_cfg(sub_track, "start")
   if cfg_start ~= nil then
     if should_skip_because_special_sub(cfg_start) then
+      set_sub_visibility(sub_track, true)
       goto skip
     end
 
@@ -217,6 +223,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
       goto skip
     end
     if should_skip_because_special_sub(cfg_end) then
+      set_sub_visibility(sub_track, true)
       goto skip
     end
 
