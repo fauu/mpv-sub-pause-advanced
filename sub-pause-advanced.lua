@@ -10,7 +10,7 @@ local options = {
   ["min-pause-duration"] = 0.5,
   ["unpause-base"] = 0.4,
   ["unpause-text-multiplier"] = 0.0015,
-  ["unpause-time-multiplier"] = 0.15,
+  ["unpause-time-multiplier"] = 0.25,
   ["unpause-exponent"] = 1.8,
 }
 local cfg = {}
