@@ -50,33 +50,46 @@ To enable the script, provide a setup definition as a script option to mpv. Here
 is an illustration of different ways to provide the setup definition `2end`, which
 instructs the script to pause at the end of each secondary subtitle:
 
-1. Directly when launching mpv
+1. Directly when launching mpv:
 
-    ```sh
+    ```txt
     mpv file.mkv --script-opts=sub-pause-setup=2end
     ```
 
-1. Globally in [mpv config]
+1. Globally in [mpv config]:
 
-    ```sh
+    ```txt
     script-opts=sub-pause-setup=2end
     ```
 
-1. As a [custom profile] in [mpv config]
+1. As a [custom profile] in [mpv config]:
 
-    ```sh
+    ```txt
     [my-sub-pause-profile]
     script-opts=sub-pause-setup=2end
     ```
 
-    Enable electively when starting mpv:
+    then enable electively when starting mpv:
 
-    ```sh
+    ```txt
     mpv file.mkv --profile=my-sub-pause-profile
     ```
 
 [mpv config]: https://mpv.io/manual/stable/#configuration-files
 [custom profile]: https://mpv.io/manual/stable/#profiles
+
+**Note: By default, pausing will be skipped when the subtitle does not met
+certain conditions:**
+
+1. The subtitle’s time duration is below the default threshold.
+
+1. The subtitle’s text length is above zero but below the default threshold.
+
+1. Auto unpause is enabled and the subtitle’s calculated pause duration is below
+   the default threshold.
+
+The values of these defaults and the way to override them are described in the
+section [Extra options](#extra-options).
 
 ## The setup definition
 
@@ -142,42 +155,13 @@ example by factor of 1.5, specify:
 
 #### Directives
 
-##### – `hide`
-
-Hide the subtitle during playback. Needs to be specified only once per subtitle
-track.\
-**Note:** Due to an mpv limitation, hiding primary subtitles will always hide
-secondary subtitles as well.
-
-Subtitles that do not qualify for a pause will not be hidden.
-
-Arguments:
-
-`hide-more` — hide also while paused for the other subtitle track.
-
-##### – `request`
-
-*Valid only for `end` position.*
-
-Only pause if requested through the pause request key binding.
-
-Arguments:
-
-`request-replay` — replay from the start of the subtitle after unpausing.
-
-##### – `special`
-
-Also pause on subtitles classified as “special”, for example karaoke subtitles
-or subtitles with special positioning that are usually for signs and other text,
-not spoken lines.
-
 ##### – `unpause`
 
-Automatically unpause playback after an interval of time calculated on the basis
+Automatically unpause playback after a time interval calculated on the basis
 of the subtitle text length. Note that this will not work properly for
-image-based subtitled, for which the `-time` argument needs to be used.
+image-based subtitled — for those, the `-time` argument must be used.
 
-Arguments:
+<u>Arguments:</u>
 
 `unpause-time` — calculate the unpause interval based on the subtitle’s defined
 playback time instead. Necessary for image-based subtitles, although it will not
@@ -188,9 +172,102 @@ be as accurate as the default option for text subtitles.
 Multiply the calculated unpause interval by `<number>`. Supports decimal parts,
 for example `0.75`.
 
+Advanced modifications to the calculation formula can be made through [Extra
+options](#extra-options).
+
+##### – `request`
+
+*Valid only for the `end` position.*
+
+Only pause if requested through the pause request key binding.
+
+<u>Arguments:</u>
+
+`request-replay` — replay from the start of the subtitle after unpausing.
+
+##### – `hide`
+
+Hide the subtitle during playback. Needs to be specified only once per subtitle
+track.\
+**Note:** Due to an mpv limitation, hiding primary subtitles will always hide
+secondary subtitles as well.
+
+Subtitles that do not qualify for a pause will not be hidden.
+
+<u>Arguments:</u>
+
+`hide-more` — hide also while paused for the other subtitle track.
+
+##### – `special`
+
+Also pause on subtitles classified as “special”, for example karaoke subtitles
+or subtitles with special positioning that are usually for signs and other text,
+not spoken lines.
+
+## Other features
+
+{TODO}
+
+{"toggle" keybinding (default `n`)}
+
+{"replay" keybinding (default `Ctrl-r`)}
+
+{"replay-secondary" keybinding (no default)}
+
+{"request-pause" keybinding (default `MBTN_RIGHT`)}
+
 ## Extra options
 
 Besides the setup definition, the script accepts several additional advanced
-configuration options.
+configuration options. The options should be appended to the same `script-opts`
+mpv property used to specify the setup definition.
 
-{TODO}
+For example, to specify custom values for the minimum subtitle time duration and
+the minimum subtitle text length qualifying for a pause, provide the following
+script options to mpv:
+
+```txt
+mpv file.mkv --script-opts=sub-pause-setup=start##end,sub-pause-min-sub-duration=2,sub-pause-min-sub-text-length=10
+```
+
+### Option list
+
+> **Note:** All options must be additionally prefixed with `sub-pause-`.
+
+– **`min-sub-duration`** (seconds; default: `1`)
+
+Do not pause for subtitles that are programmed to display for less than this
+amount of seconds.
+
+– **`min-sub-text-length`** (characters; default: `5`)
+
+Do not pause for subtitles that are shorter than this amount of characters.
+(Ignored if the length is equal to `0` to not conflict with image-based
+subtitles).
+
+– **`min-pause-duration`** (seconds; default: `0.5`)
+
+If automatic unpausing is enabled, do not pause unless the calculated pause
+duration is at least this amount of seconds.
+
+– **`unpause-base`** (seconds; default: `0.4`)
+
+Base automatic pause duration in seconds. Extra pause time dependend on the
+length of the subtitle will be a further addition to this value.
+
+– **`unpause-text-multiplier`** (default: `0.0015`)
+
+A multiplier used to transform the subtitle text length in characters into the
+auto pause duration in `unpause` mode.
+
+– **`unpause-time-multiplier`** (`0.25`)
+
+A multiplier used to transform the subtitle time length in seconds into the auto
+pause duration in `unpause-time` mode.
+
+– **`unpause-exponent`** (`1.8`)
+
+An exponent used to scale the subtitle length (both text and time length,
+depending on the mode) in the auto pause duration calculation, so that a
+subtitle that is twice as long is, by default, given more than twice the pause
+time. To make the scaling linear, set to `1`.
