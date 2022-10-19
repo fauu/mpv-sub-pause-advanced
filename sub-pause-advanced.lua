@@ -369,7 +369,11 @@ local function init()
     if sub_track_cfg(track) then
       state.enabled = true
 
-      mp.observe_property("sub-end", "number", handle_sub_end_time_for_sub_track[track])
+      mp.observe_property(
+        sub_track_property(track, "sub-end"),
+        "number",
+        handle_sub_end_time_for_sub_track[track]
+      )
       if not paused and cfg[track].hide_while_playing then
         set_sub_visibility(track, false)
       end
