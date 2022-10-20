@@ -13,6 +13,7 @@ local options = {
   ["unpause-time-multiplier"] = 0.25,
   ["unpause-exponent"] = 1.8,
   ["corresponding-sub-max-delta"] = 0.9,
+  ["sub-delay"] = "no", -- String to support empty value
 }
 local cfg = {}
 local state = {}
@@ -416,6 +417,11 @@ local function init()
   end)
   if sub_track_cfg(1) or sub_track_cfg(2) then
     mp.observe_property("pause", "bool", handle_pause)
+
+    local delay_number = tonumber(cfg.sub_delay_secs)
+    if delay_number then
+      mp.set_property("sub-delay", delay_number)
+    end
   end
   if sub_track_cfg(1, "end") or sub_track_cfg(2, "end") then
     mp.observe_property("time-pos", "number", handle_time_pos)
@@ -455,6 +461,7 @@ local function parse_cfg()
     unpause_time_multiplier = options["unpause-time-multiplier"],
     unpause_exponent = options["unpause-exponent"],
     corresponding_sub_max_delta_secs = options["corresponding-sub-max-delta"],
+    sub_delay_secs = options["sub-delay"],
   }
 
   for part in options.setup:gmatch("[%w%_-%!%.]+") do

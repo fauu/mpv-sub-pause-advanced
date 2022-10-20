@@ -323,3 +323,8 @@ time. To make the scaling linear, set to `1`.
 If [`race`](#directives) is enabled, do not pause in case when we already paused
 for subtitle end on the other track at most this many seconds ago (in terms of
 video playback time).
+
+– **`sub-delay`** (`no`)
+
+If a number is provided, set the mpv sub delay to that many seconds each time
+the script is initialized with at least one pause point set up.
