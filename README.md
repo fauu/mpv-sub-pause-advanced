@@ -223,17 +223,44 @@ Also pause on subtitles classified as “special”, for example karaoke subtitl
 or subtitles with special positioning that are usually for signs and other text,
 not spoken lines.
 
-## Other features
+## Key bindings
 
-{TODO}
+Below is a list of key bindings available for the script. To assign a key where
+none is assigned by default or to assign a different one, add an appropriate
+`script-binding` line to mpv’s [input.conf] file.
 
-{"toggle" keybinding (default `n`)}
+For example, to have the key <kbd>n</kbd> turn the script off and back on, add
+the line:
 
-{"replay" keybinding (default `Ctrl-r`)}
+```txt
+n script-binding sub_pause_advanced/toggle-pausing
+```
 
-{"replay-secondary" keybinding (no default)}
+(Note the underscores.)
 
-{"request-pause" keybinding (default `MBTN_RIGHT`)}
+To set other bindings, replace, in the example above, `n` with the desired key
+(see [key names] in mpv manual) and `toggle-pausing` with the name of one of
+the other bindings listed below.
+
+– **`toggle-pausing`** (default: none)
+
+Disable or re-enable pausing and adjacent features (such as subtitle hiding).
+
+– **`request-pause`** (default: <kbd>Right mouse button</kbd>)
+
+When the `request` directive is active, queue a pause for the end of the current
+subtitle. Otherwise, pause immediately. If already paused—unpause.
+
+– **`replay`** (default: <kbd>Ctrl</kbd> + <kbd>r</kbd>)
+
+Replay from the start of the current primary subtitle.
+
+– **`replay-secondary`** (default: none)
+
+Replay from the start of the current secondary subtitle.
+
+[input.conf]: https://mpv.io/manual/stable/#input-conf
+[key names]: https://mpv.io/manual/stable/#key-names
 
 ## Extra options
 
