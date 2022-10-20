@@ -552,7 +552,7 @@ local function main()
   print(debug_dump(cfg))
   init_state()
   mp.observe_property("current-tracks/sub/id", "number", handle_primary_sub_track)
-  mp.add_key_binding(nil, "toggle", handle_toggle)
+  mp.add_key_binding(nil, "toggle-pausing", handle_toggle)
 
   mp.add_key_binding("MBTN_RIGHT", "request-pause", handle_request_pause_pressed)
 
