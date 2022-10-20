@@ -198,6 +198,25 @@ Subtitles that do not qualify for a pause will not be hidden.
 
 `hide-more` — hide also while paused for the other subtitle track.
 
+##### – `race`
+
+*Valid only for the `end` position.*
+
+Skip pause to avoid two consecutive pauses in case when we just recently paused
+for the end of the subtitle on the other track. In other words, the following
+setup definition:
+
+```txt
+end!race##2end!race
+```
+
+should lead to only one pause at the end of each subtitled line, at time
+position dependent on whichever track has its subtitle ending earlier.
+
+The playback time interval, counting from the previous pause, within which this
+option is active, can be customized through the [extra option](#extra-options)
+`corresponding-sub-max-delta`.
+
 ##### – `special`
 
 Also pause on subtitles classified as “special”, for example karaoke subtitles
@@ -271,3 +290,9 @@ An exponent used to scale the subtitle length (both text and time length,
 depending on the mode) in the auto pause duration calculation, so that a
 subtitle that is twice as long is, by default, given more than twice the pause
 time. To make the scaling linear, set to `1`.
+
+– **`corresponding-sub-max-delta`** (`0.9`)
+
+If [`race`](#directives) is enabled, do not pause in case when we already paused
+for subtitle end on the other track at most this many seconds ago (in terms of
+video playback time).

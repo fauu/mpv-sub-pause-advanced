@@ -12,6 +12,7 @@ local options = {
   ["unpause-text-multiplier"] = 0.0015,
   ["unpause-time-multiplier"] = 0.25,
   ["unpause-exponent"] = 1.8,
+  ["corresponding-sub-max-delta"] = 0.9,
 }
 local cfg = {}
 local state = {}
@@ -54,6 +55,10 @@ local function for_each_sub_track(cb)
   for sub_track=1,2 do
     cb(sub_track)
   end
+end
+
+local function other_sub_track(track)
+  return (track % 2) + 1
 end
 
 --- SUB TEXT UTILITIES -----------------------------------------------------------------------------
@@ -116,7 +121,7 @@ local function start_pause_duration(sub_track, mode, scale)
   return scale * unscaled
 end
 
-local function pause(sub_track)
+local function pause(sub_track, sub_pos)
   mp.set_property_bool("pause", true)
   for_each_sub_track(function (track)
     if sub_track_cfg(track, nil, "hide_while_playing")
@@ -127,6 +132,11 @@ local function pause(sub_track)
         set_sub_visibility(track, true)
     end
   end)
+
+  if sub_track then
+    state.last_pause_time_pos[sub_track] = mp.get_property_number("time-pos")
+    state.last_pause_sub_pos[sub_track] = sub_pos
+  end
 end
 
 local function unpause()
@@ -149,18 +159,33 @@ local function unpause_after(duration)
   state.unpause_timer = mp.add_timeout(duration, unpause)
 end
 
+local function pause_wait_unpause(sub_track, sub_pos, part_cfg)
+  local pause_duration =
+    start_pause_duration(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
+  if pause_duration >= cfg.min_pause_duration_secs then
+    pause(sub_track, sub_pos)
+    unpause_after(pause_duration)
+  end
+end
+
 local function should_skip_because_special_sub(part_cfg)
   return not part_cfg.consider_special_subs
     and suspected_special_sub(mp.get_property("sub-text-ass"))
 end
 
-local function pause_wait_unpause(sub_track, part_cfg)
-  local pause_duration =
-    start_pause_duration(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
-  if pause_duration >= cfg.min_pause_duration_secs then
-    pause(sub_track)
-    unpause_after(pause_duration)
+local function just_paused_for_sub_end_on_other_track(sub_track)
+  local other_track = other_sub_track(sub_track)
+  if state.last_pause_sub_pos[other_track] == "end" then
+    local other_last_pause_time = state.last_pause_time_pos[other_track]
+    if other_last_pause_time then
+      local now = mp.get_property_number("time-pos")
+      local delta = now - other_last_pause_time
+      if delta > 0 and delta <= cfg.corresponding_sub_max_delta_secs then
+        return true
+      end
+    end
   end
+  return false
 end
 
 --- CORE EVENTS -----------------------------------------------------------------------------------
@@ -208,9 +233,9 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     end
 
     if cfg_start.unpause then
-      pause_wait_unpause(sub_track, cfg_start)
+      pause_wait_unpause(sub_track, "start", cfg_start)
     else
-      pause(sub_track)
+      pause(sub_track, "start")
     end
 
     ::skip::
@@ -222,6 +247,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     if cfg_end.on_request then
       goto skip
     end
+
     if should_skip_because_special_sub(cfg_end) then
       set_sub_visibility(sub_track, true)
       goto skip
@@ -241,10 +267,15 @@ local function handle_sub_end_reached(sub_track)
   state.pause_at_sub_end[sub_track] = false
 
   local cfg_end = sub_track_cfg(sub_track, "end")
+
+  if cfg_end.race and just_paused_for_sub_end_on_other_track(sub_track) then
+    return
+  end
+
   if cfg_end.unpause then
-    pause_wait_unpause(sub_track, cfg_end)
+    pause_wait_unpause(sub_track, "end", cfg_end)
   else
-    pause(sub_track)
+    pause(sub_track, "end")
   end
 end
 
@@ -326,6 +357,8 @@ local function init_state()
     unpause_timer = nil,
     curr_sub_end = {nil, nil},
     curr_sub_time_length = {nil, nil},
+    last_pause_time_pos = {nil, nil},
+    last_pause_sub_pos = {nil, nil},
 
     -- TODO: Both probably need to be cleared on seek or sth to invalidate possible pause request
     pause_at_sub_end = {false, false},
@@ -342,6 +375,8 @@ local function reset_state()
   state.curr_sub_end = {nil, nil}
   state.curr_sub_time_length = {nil, nil}
   state.curr_sub_text_length = {nil, nil}
+  state.last_pause_time_pos = {nil, nil}
+  state.last_pause_sub_pos = {nil, nil}
   state.pause_at_sub_end = {false, false}
   state.replay_on_unpause = {false, false}
 end
@@ -419,6 +454,7 @@ local function parse_cfg()
     unpause_text_multiplier = options["unpause-text-multiplier"],
     unpause_time_multiplier = options["unpause-time-multiplier"],
     unpause_exponent = options["unpause-exponent"],
+    corresponding_sub_max_delta_secs = options["corresponding-sub-max-delta"],
   }
 
   for part in options.setup:gmatch("[%w%_-%!%.]+") do
@@ -429,6 +465,7 @@ local function parse_cfg()
       unpause_mode = UnpauseMode.TEXT,
       unpause_scale = 1,
       consider_special_subs = false,
+      race = false,
     }
 
     local segs = part:gmatch("[^%!]+")
@@ -479,6 +516,8 @@ local function parse_cfg()
         end
       elseif main == "special" and sub_track == 1 then
         c.consider_special_subs = true
+      elseif main == "race" and sub_pos == "end" then
+        c.race = true
       end
     end
 
