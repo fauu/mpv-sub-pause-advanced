@@ -301,17 +301,17 @@ duration is at least this amount of seconds.
 Base automatic pause duration in seconds. Extra pause time dependend on the
 length of the subtitle will be a further addition to this value.
 
-– **`unpause-text-multiplier`** (default: `0.0015`)
+– **`unpause-text-multiplier`** (default: `0.017`)
 
 A multiplier used to transform the subtitle text length in characters into the
 auto pause duration in `unpause` mode.
 
-– **`unpause-time-multiplier`** (`0.25`)
+– **`unpause-time-multiplier`** (`3`)
 
 A multiplier used to transform the subtitle time length in seconds into the auto
 pause duration in `unpause-time` mode.
 
-– **`unpause-exponent`** (`1.8`)
+– **`unpause-exponent`** (`1.2`)
 
 An exponent used to scale the subtitle length (both text and time length,
 depending on the mode) in the auto pause duration calculation, so that a

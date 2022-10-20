@@ -9,9 +9,9 @@ local options = {
   ["min-sub-text-length"] = 5, -- NOTE: Only in effect if length > `0`
   ["min-pause-duration"] = 0.5,
   ["unpause-base"] = 0.4,
-  ["unpause-text-multiplier"] = 0.0015,
-  ["unpause-time-multiplier"] = 0.25,
-  ["unpause-exponent"] = 1.8,
+  ["unpause-text-multiplier"] = 0.017,
+  ["unpause-time-multiplier"] = 3,
+  ["unpause-exponent"] = 1.2,
   ["corresponding-sub-max-delta"] = 0.9,
   ["sub-delay"] = "no", -- String to support empty value
 }
