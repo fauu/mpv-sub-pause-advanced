@@ -552,9 +552,9 @@ local function main()
   print(debug_dump(cfg))
   init_state()
   mp.observe_property("current-tracks/sub/id", "number", handle_primary_sub_track)
-  mp.add_key_binding("n", "toggle", handle_toggle)
+  mp.add_key_binding(nil, "toggle", handle_toggle)
 
-  mp.add_forced_key_binding("MBTN_RIGHT", "request-pause", handle_request_pause_pressed)
+  mp.add_key_binding("MBTN_RIGHT", "request-pause", handle_request_pause_pressed)
 
   mp.add_key_binding("Ctrl+r", "replay", function() replay_sub(1) end)
   mp.add_key_binding(nil, "replay-secondary", function() replay_sub(2) end)
