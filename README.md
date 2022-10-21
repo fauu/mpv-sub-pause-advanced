@@ -228,7 +228,7 @@ position dependent on whichever track has its subtitle ending earlier.
 
 The playback time interval, counting from the previous pause, within which this
 option is active, can be customized through the [extra option](#extra-options)
-`corresponding-sub-max-delta`.
+`pair-sub-max-delta`.
 
 ##### – `special`
 
@@ -331,7 +331,7 @@ depending on the mode) in the auto pause duration calculation, so that a
 subtitle that is twice as long is, by default, given more than twice the pause
 time. To make the scaling linear, set to `1`.
 
-– **`corresponding-sub-max-delta`** (`0.9`)
+– **`pair-sub-max-delta`** (`0.9`)
 
 If [`race`](#directives) is enabled, do not pause in case when we already paused
 for subtitle end on the other track at most this many seconds ago (in terms of

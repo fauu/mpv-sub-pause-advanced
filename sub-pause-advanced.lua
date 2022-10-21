@@ -12,7 +12,7 @@ local options = {
   ["unpause-text-multiplier"] = 0.017,
   ["unpause-time-multiplier"] = 3,
   ["unpause-exponent"] = 1.2,
-  ["corresponding-sub-max-delta"] = 0.9,
+  ["pair-sub-max-delta"] = 0.9,
   ["sub-delay"] = "no", -- String to support empty value
 }
 local cfg = {}
@@ -181,7 +181,7 @@ local function just_paused_for_sub_end_on_other_track(sub_track)
     if other_last_pause_time then
       local now = mp.get_property_number("time-pos")
       local delta = now - other_last_pause_time
-      if delta > 0 and delta <= cfg.corresponding_sub_max_delta_secs then
+      if delta > 0 and delta <= cfg.pair_sub_max_delta_secs then
         return true
       end
     end
@@ -460,7 +460,7 @@ local function parse_cfg()
     unpause_text_multiplier = options["unpause-text-multiplier"],
     unpause_time_multiplier = options["unpause-time-multiplier"],
     unpause_exponent = options["unpause-exponent"],
-    corresponding_sub_max_delta_secs = options["corresponding-sub-max-delta"],
+    pair_sub_max_delta_secs = options["pair-sub-max-delta"],
     sub_delay_secs = options["sub-delay"],
   }
 
