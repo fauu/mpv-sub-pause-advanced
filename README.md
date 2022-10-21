@@ -17,6 +17,19 @@ issues / incompatibilities / unexpected behaviours by creating a
 [issues]: https://github.com/fauu/mpv-sub-pause-advanced/issues
 [mpv]: https://mpv.io/
 
+## Table of contents
+
+1. [Main features](#main-features)
+2. [Installation](#installation)
+3. [Base usage](#base-usage)
+4. [The setup definition](#the-setup-definition)
+    * [Form](#form)
+    * [All setup parameters](#all-setup-parameters)
+5. [Key bindings](#key-bindings)
+6. [Extra options](#extra-options)
+    * [Option list](#option-list)
+7. [Known issues](#known-issues)
+
 ## Main features
 
 * Independently configure pausing at the start/end of the primary/secondary
