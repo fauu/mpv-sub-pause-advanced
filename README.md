@@ -12,7 +12,7 @@
 *Note: This script has not been thoroughly tested yet for all of its possible
 configuration combinations. Please feel encouraged to report any suspected
 issues / incompatibilities / unexpected behaviours by creating a
-[Github issue][issues].
+[Github issue][issues].*
 
 [issues]: https://github.com/fauu/mpv-sub-pause-advanced/issues
 [mpv]: https://mpv.io/
