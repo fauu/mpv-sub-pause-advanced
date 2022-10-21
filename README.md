@@ -28,12 +28,12 @@ issues / incompatibilities / unexpected behaviours by creating a
 * Pause on request: press a key to request a pause at the end of the current
   subtitle.
 
-* Avoid pausing for subtitles below a specified length threshold.
+* Skip pausing for subtitles below a specified length threshold.
 
-* Avoid pausing for special subtitles, such as karaoke subtitles or
-  sign subtitles.
+* Skip pausing for special subtitles, such as karaoke subtitles or sign
+  subtitles.
 
-* Hide subtitles when not paused for them.
+* Hide subtitle when playing or when paused for another subtitle track.
 
 ## Table of contents
 
