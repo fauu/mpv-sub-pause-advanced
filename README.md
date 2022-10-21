@@ -346,8 +346,9 @@ the script is initialized with at least one pause point set up.
 **I. Not pausing when there is an overlapping sign subtitle present during
 dialogue lines**
 
-Likely impossible to fix, because in this case we receive a `sub-end` event only
-for the sign subtitle, and not for the dialogue subtitles that change while the
-sign subtitle is present (although we do receive `sub-text` for those).
+Likely impossible to fix for the `end` position, because in this case we receive
+a `sub-end` event only for the sign subtitle, and not for the dialogue subtitles
+that change while the sign subtitle is present. We do, however, receive
+`sub-text`, so it could be viable to use that to make the `start` position work.
 
 <u>Reproduction:</u> *Hanasaku Iroha - E15* (Doki) `sub-pause-setup=start --start=2:00`
