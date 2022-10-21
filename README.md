@@ -328,3 +328,14 @@ video playback time).
 
 If a number is provided, set the mpv sub delay to that many seconds each time
 the script is initialized with at least one pause point set up.
+
+## Known issues
+
+**I. Not pausing when there is an overlapping sign subtitle present during
+dialogue lines**
+
+Likely impossible to fix, because in this case we receive a `sub-end` event only
+for the sign subtitle, and not for the dialogue subtitles that change while the
+sign subtitle is present (although we do receive `sub-text` for those).
+
+<u>Reproduction:</u> *Hanasaku Iroha - E15* (Doki) `sub-pause-setup=start --start=2:00`
