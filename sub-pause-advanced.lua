@@ -3,6 +3,13 @@ local UnpauseMode = {
   TIME = 2,
 }
 
+local DefaultKeys = {
+  ["toggle-pausing"] = nil,
+  ["reuqest-pause"] = "MBTN_RIGHT",
+  ["replay"] = "Ctrl+r",
+  ["replay-secondary"] = nil,
+}
+
 local options = {
   setup = "",
   ["min-sub-duration"] = 1,
@@ -559,12 +566,15 @@ local function main()
   print(debug_dump(cfg))
   init_state()
   mp.observe_property("current-tracks/sub/id", "number", handle_primary_sub_track)
-  mp.add_key_binding(nil, "toggle-pausing", handle_toggle)
 
-  mp.add_key_binding("MBTN_RIGHT", "request-pause", handle_request_pause_pressed)
-
-  mp.add_key_binding("Ctrl+r", "replay", function() replay_sub(1) end)
-  mp.add_key_binding(nil, "replay-secondary", function() replay_sub(2) end)
+  mp.add_key_binding(DefaultKeys["toggle-pausing"], "toggle-pausing", handle_toggle)
+  mp.add_key_binding(DefaultKeys["request-pause"], "request-pause", handle_request_pause_pressed)
+  mp.add_key_binding(DefaultKeys["replay"], "replay", function() replay_sub(1) end)
+  mp.add_key_binding(
+    DefaultKeys["replay-secondary"],
+    "replay-secondary",
+    function() replay_sub(2) end
+  )
 end
 
 main()
