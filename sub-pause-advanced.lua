@@ -361,15 +361,15 @@ end
 
 local function init_state()
   state = {
-    enabled = false,
-    unpause_timer = nil,
-    curr_sub_end = {nil, nil},
+    enabled              = false,
+    unpause_timer        = nil,
+    curr_sub_end         = {nil, nil},
     curr_sub_time_length = {nil, nil},
-    last_pause_time_pos = {nil, nil},
-    last_pause_sub_pos = {nil, nil},
+    last_pause_time_pos  = {nil, nil},
+    last_pause_sub_pos   = {nil, nil},
 
     -- TODO: Both probably need to be cleared on seek or sth to invalidate possible pause request
-    pause_at_sub_end = {false, false},
+    pause_at_sub_end =  {false, false},
     replay_on_unpause = {false, false}
   }
 end
@@ -378,15 +378,15 @@ local function reset_state()
   if state.unpause_timer ~= nil then
     state.unpause_timer:kill()
   end
-  state.enabled = false
-  state.unpause_timer = nil
-  state.curr_sub_end = {nil, nil}
+  state.enabled              = false
+  state.unpause_timer        = nil
+  state.curr_sub_end         = {nil, nil}
   state.curr_sub_time_length = {nil, nil}
   state.curr_sub_text_length = {nil, nil}
-  state.last_pause_time_pos = {nil, nil}
-  state.last_pause_sub_pos = {nil, nil}
-  state.pause_at_sub_end = {false, false}
-  state.replay_on_unpause = {false, false}
+  state.last_pause_time_pos  = {nil, nil}
+  state.last_pause_sub_pos   = {nil, nil}
+  state.pause_at_sub_end     = {false, false}
+  state.replay_on_unpause    = {false, false}
 end
 
 local function deinit()
@@ -459,16 +459,17 @@ end
 
 local function parse_cfg()
   local new_cfg = {
-    sub_end_delta = 0.1,
+    sub_end_delta           = 0.1,
+
     min_sub_time_length_sec = options["min-sub-duration"],
-    min_sub_text_length = options["min-sub-text-length"],
+    min_sub_text_length     = options["min-sub-text-length"],
     min_pause_duration_secs = options["min-pause-duration"],
-    unpause_base_secs = options["unpause-base"],
+    unpause_base_secs       = options["unpause-base"],
     unpause_text_multiplier = options["unpause-text-multiplier"],
     unpause_time_multiplier = options["unpause-time-multiplier"],
-    unpause_exponent = options["unpause-exponent"],
+    unpause_exponent        = options["unpause-exponent"],
     pair_sub_max_delta_secs = options["pair-sub-max-delta"],
-    sub_delay_secs = options["sub-delay"],
+    sub_delay_secs          = options["sub-delay"],
   }
 
   for part in options.setup:gmatch("[%w%_-%!%.]+") do
