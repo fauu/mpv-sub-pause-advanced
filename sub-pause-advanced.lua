@@ -222,19 +222,9 @@ local function should_skip_for_position(sub_pos, part_cfg)
   if part_cfg == nil then
     return true
   end
-
-  if sub_pos == "start" and not part_cfg.overlapping then
-    local last = state.last_start_pause_sub_end_time
-    if last and last > mp.get_property_number("time-pos") then
-      -- We have already paused for an overlapping subtitle
-      return true
-    end
-  end
-
   if sub_pos == "end" and part_cfg.on_request then
     return true
   end
-
   return should_skip_because_special_sub(part_cfg)
 end
 
@@ -265,7 +255,7 @@ local function save_curr_sub_lengths(sub_track, sub_time_length, sub_text_length
   state.curr_sub_text_length[sub_track] = sub_text_length
 end
 
-local function maybe_perform_start_pause(sub_track, sub_end_time)
+local function maybe_perform_start_pause(sub_track)
   local cfg_start = sub_track_cfg(sub_track, "start")
 
   if should_skip_for_position("start", cfg_start) then
@@ -278,8 +268,6 @@ local function maybe_perform_start_pause(sub_track, sub_end_time)
   else
     pause(sub_track, "start")
   end
-
-  state.last_start_pause_sub_end_time = sub_end_time
 end
 
 local function maybe_queue_end_pause(sub_track)
@@ -316,7 +304,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
   end
   save_curr_sub_lengths(sub_track, sub_time_length, sub_text_length)
 
-  maybe_perform_start_pause(sub_track, sub_end_time)
+  maybe_perform_start_pause(sub_track)
   maybe_queue_end_pause(sub_track)
 end
 
@@ -409,14 +397,13 @@ end
 
 local function init_state()
   state = {
-    enabled                       = false,
-    override                      = false,
-    unpause_timer                 = nil,
-    curr_sub_end                  = {nil, nil},
-    curr_sub_time_length          = {nil, nil},
-    last_pause_time_pos           = {nil, nil},
-    last_pause_sub_pos            = {nil, nil},
-    last_start_pause_sub_end_time = nil,
+    enabled              = false,
+    override             = false,
+    unpause_timer        = nil,
+    curr_sub_end         = {nil, nil},
+    curr_sub_time_length = {nil, nil},
+    last_pause_time_pos  = {nil, nil},
+    last_pause_sub_pos   = {nil, nil},
 
     -- TODO: Both probably need to be cleared on seek or sth to invalidate possible pause request
     pause_at_sub_end =  {false, false},
@@ -428,17 +415,16 @@ local function reset_state()
   if state.unpause_timer ~= nil then
     state.unpause_timer:kill()
   end
-  state.enabled                       = false
-  state.override                      = false
-  state.unpause_timer                 = nil
-  state.curr_sub_end                  = {nil, nil}
-  state.curr_sub_time_length          = {nil, nil}
-  state.curr_sub_text_length          = {nil, nil}
-  state.last_pause_time_pos           = {nil, nil}
-  state.last_pause_sub_pos            = {nil, nil}
-  state.last_start_pause_sub_end_time = nil
-  state.pause_at_sub_end              = {false, false}
-  state.replay_on_unpause             = {false, false}
+  state.enabled              = false
+  state.override             = false
+  state.unpause_timer        = nil
+  state.curr_sub_end         = {nil, nil}
+  state.curr_sub_time_length = {nil, nil}
+  state.curr_sub_text_length = {nil, nil}
+  state.last_pause_time_pos  = {nil, nil}
+  state.last_pause_sub_pos   = {nil, nil}
+  state.pause_at_sub_end     = {false, false}
+  state.replay_on_unpause    = {false, false}
 end
 
 local function deinit()
@@ -546,7 +532,6 @@ local function parse_cfg()
       unpause_scale = 1,
       consider_special_subs = false,
       race = false,
-      overlapping = false,
     }
 
     local segs = part:gmatch("[^%!]+")
@@ -599,8 +584,6 @@ local function parse_cfg()
         c.consider_special_subs = true
       elseif main == "race" and sub_pos == "end" then
         c.race = true
-      elseif main == "overlapping" and sub_pos == "start" then
-        c.overlapping = true
       end
     end
 

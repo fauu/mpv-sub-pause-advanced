@@ -90,8 +90,8 @@ instructs the script to pause at the end of each secondary subtitle:
 [mpv config]: https://mpv.io/manual/stable/#configuration-files
 [custom profile]: https://mpv.io/manual/stable/#profiles
 
-**Note: By default, pausing will be skipped when certain conditions are not
-met:**
+**Note: By default, pausing will be skipped when the subtitle does not met
+certain conditions:**
 
 1. The subtitle’s time duration is below the default threshold.
 
@@ -100,12 +100,8 @@ met:**
 1. Auto unpause is enabled and the subtitle’s calculated pause duration is below
    the default threshold.
 
-1. The pause position is `start` and the previous subtitle for which there was a
-   pause has not ended yet (can be overriden with the directive `overlapping` —
-   see [Directives](#directives)).
-
-The values of the defaults for conditions 1–3 and the way to override them are
-described in the section [Extra options](#extra-options).
+The values of these defaults and the way to override them are described in the
+section [Extra options](#extra-options).
 
 ## The setup definition
 
@@ -238,15 +234,6 @@ option is active, can be customized through the [extra option](#extra-options)
 Also pause on subtitles classified as “special”, for example karaoke subtitles
 or subtitles with special positioning that are usually for signs and other text,
 not spoken lines.
-
-#### – `overlapping`
-
-*Valid only for the `start` position.*
-
-Additionally pause for some overlapping subtitles. By default, a pause is
-skipped if there has already been a pause for an earlier subtitle that is still
-being displayed at the time the current subtitle begins. The `overlapping`
-directive disables this behaviour, allowing the pause to go through.
 
 ## Key bindings
 
