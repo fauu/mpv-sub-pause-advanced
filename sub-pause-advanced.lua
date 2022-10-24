@@ -25,6 +25,23 @@ local options = {
 local cfg = {}
 local state = {}
 
+--- GENERAL UTILITIES ------------------------------------------------------------------------------
+
+local function debug_dump(o)
+  if type(o) == "table" then
+    local s = "{ "
+    for k, v in pairs(o) do
+      if type(k) ~= "number" then
+        k = '"' .. k.. '"'
+      end
+      s = s .. "[" .. k .. "] = " .. debug_dump(v) .. ","
+    end
+    return s .. "} "
+  else
+    return tostring(o)
+  end
+end
+
 --- CONFIG UTILITIES -----------------------------------------------------------------------------------
 
 local function sub_track_cfg(sub_track, sub_pos, key)
@@ -130,6 +147,10 @@ local function unpause_interval(sub_track, mode, scale)
 end
 
 local function pause(sub_track, sub_pos)
+  if state.override then
+    return
+  end
+
   mp.set_property_bool("pause", true)
   for_each_sub_track(function (track)
     if sub_track_cfg(track, nil, "hide_while_playing")
@@ -377,6 +398,7 @@ end
 local function init_state()
   state = {
     enabled              = false,
+    override             = false,
     unpause_timer        = nil,
     curr_sub_end         = {nil, nil},
     curr_sub_time_length = {nil, nil},
@@ -394,6 +416,7 @@ local function reset_state()
     state.unpause_timer:kill()
   end
   state.enabled              = false
+  state.override             = false
   state.unpause_timer        = nil
   state.curr_sub_end         = {nil, nil}
   state.curr_sub_time_length = {nil, nil}
@@ -458,7 +481,7 @@ local function handle_primary_sub_track()
   init()
 end
 
-local function handle_toggle()
+local function handle_toggle_pressed()
   local state_str
   if state.enabled then
     -- Disable
@@ -472,6 +495,15 @@ local function handle_toggle()
     state_str = "on"
   end
   mp.osd_message("Subtitle pause " .. state_str, 3)
+end
+
+local function handle_override_binding(info)
+  if info.event == "down" then
+    state.override = true
+    unpause()
+  elseif info.event == "up" then
+    state.override = false
+  end
 end
 
 --- CONFIG PARSE -----------------------------------------------------------------------------------
@@ -565,21 +597,6 @@ end
 
 --- MAIN ------------------------------------------------------------------------------------------
 
-local function debug_dump(o)
-  if type(o) == "table" then
-    local s = "{ "
-    for k, v in pairs(o) do
-      if type(k) ~= "number" then
-        k = '"' .. k.. '"'
-      end
-      s = s .. "[" .. k .. "] = " .. debug_dump(v) .. ","
-    end
-    return s .. "} "
-  else
-    return tostring(o)
-  end
-end
-
 local function main()
   require("mp.options").read_options(options, "sub-pause")
   cfg = parse_cfg()
@@ -587,7 +604,13 @@ local function main()
   init_state()
   mp.observe_property("current-tracks/sub/id", "number", handle_primary_sub_track)
 
-  mp.add_key_binding(DefaultKeys["toggle-pausing"], "toggle-pausing", handle_toggle)
+  mp.add_key_binding(DefaultKeys["toggle-pausing"], "toggle-pausing", handle_toggle_pressed)
+  mp.add_key_binding(
+    DefaultKeys["toggle-pausing"],
+    "override-pausing",
+    handle_override_binding,
+    {complex = true}
+  )
   mp.add_key_binding(DefaultKeys["request-pause"], "request-pause", handle_request_pause_pressed)
   mp.add_key_binding(DefaultKeys["replay"], "replay", function() replay_sub(1) end)
   mp.add_key_binding(

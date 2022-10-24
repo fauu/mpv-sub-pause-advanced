@@ -241,22 +241,26 @@ Below is a list of key bindings available for the script. To assign a key where
 none is assigned by default or to assign a different one, add an appropriate
 `script-binding` line to mpv’s [input.conf] file.
 
-For example, to have the key <kbd>n</kbd> turn the script off and back on, add
-the line:
+For example, to have the key <kbd>N</kbd> (i.e., <kbd>Shift</kbd> + <kbd>n</kbd>)
+turn the script off and back on, add the line:
 
 ```txt
-n script-binding sub_pause_advanced/toggle-pausing
+N script-binding sub_pause_advanced/toggle-pausing
 ```
 
 (Note the underscores.)
 
-To set other bindings, replace, in the example above, `n` with the desired key
+To set other bindings, replace, in the example above, `N` with the desired key
 (see [key names] in mpv manual) and `toggle-pausing` with the name of one of
 the other bindings listed below.
 
-– **`toggle-pausing`** (default: none)
+– **`toggle-pausing`** (default: none; recommendation: <kbd>N</kbd>)
 
 Disable or re-enable pausing and adjacent features (such as subtitle hiding).
+
+– **`override-pausing`** (default: none; recommendation: <kbd>n</kbd>)
+
+Unpause and prevent any pauses while the key remains pressed.
 
 – **`request-pause`** (default: <kbd>Right mouse button</kbd>)
 
