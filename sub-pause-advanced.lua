@@ -355,11 +355,13 @@ local function handle_pause(_, paused)
     invalidate_unpause_timer()
 
     -- TODO: Honor manual visibility changes?
-    for_each_sub_track(function (track)
-      if sub_track_cfg(track, nil, "hide_while_playing") then
-        set_sub_visibility(track, false)
-      end
-    end)
+    if not state.override then
+      for_each_sub_track(function (track)
+        if sub_track_cfg(track, nil, "hide_while_playing") then
+          set_sub_visibility(track, false)
+        end
+      end)
+    end
   end
 end
 
