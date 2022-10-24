@@ -17,7 +17,7 @@ local options = {
   ["min-pause-duration"] = 0.5,
   ["unpause-base"] = 0.4,
   ["unpause-text-multiplier"] = 0.017,
-  ["unpause-time-multiplier"] = 3,
+  ["unpause-time-multiplier"] = 0.5, -- TODO: Update in README when tuned
   ["unpause-exponent"] = 1.2,
   ["pair-sub-max-delta"] = 0.9,
   ["sub-delay"] = "no", -- String to support empty value
@@ -117,7 +117,7 @@ end
 
 --- PAUSE/UNPAUSE FUNCTIONS ------------------------------------------------------------------------
 
-local function start_pause_duration(sub_track, mode, scale)
+local function unpause_interval(sub_track, mode, scale)
   local unscaled = cfg.unpause_base_secs
   if mode == UnpauseMode.TEXT then
     local text_length = state.curr_sub_text_length[sub_track]
@@ -169,7 +169,7 @@ end
 
 local function pause_wait_unpause(sub_track, sub_pos, part_cfg)
   local pause_duration =
-    start_pause_duration(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
+    unpause_interval(sub_track, part_cfg.unpause_mode, part_cfg.unpause_scale)
   if pause_duration >= cfg.min_pause_duration_secs then
     pause(sub_track, sub_pos)
     unpause_after(pause_duration)
@@ -179,6 +179,39 @@ end
 local function should_skip_because_special_sub(part_cfg)
   return not part_cfg.consider_special_subs
     and suspected_special_sub(mp.get_property("sub-text-ass"))
+end
+
+local function should_skip_general(sub_start_time, sub_end_time)
+  -- Skip if sub too short in terms of both time and text length
+  local sub_time_length = sub_end_time - sub_start_time
+  if sub_time_length < cfg.min_sub_time_length_sec then
+    return true, nil, nil
+  end
+  local sub_text_length = calculate_sub_text_length(mp.get_property("sub-text"))
+
+  -- Ignore `0`, since image-based subs have the length of `0`
+  if sub_text_length > 0 and sub_text_length < cfg.min_sub_text_length then
+    return true, nil, nil
+  end
+
+  return false, sub_time_length, sub_text_length
+end
+
+local function should_skip_for_position(sub_pos, part_cfg)
+  if part_cfg == nil then
+    return true
+  end
+  if sub_pos == "end" and part_cfg.on_request then
+    return true
+  end
+  return should_skip_because_special_sub(part_cfg)
+end
+
+local function on_pause_skip(sub_track)
+  -- NOTE: We need to reveal when skipping, because otherwise having "hide while playing" enabled
+  --       would mean that the sub is never displayed
+  -- TODO: Honor manual visibility changes?
+  set_sub_visibility(sub_track, true)
 end
 
 local function just_paused_for_sub_end_on_other_track(sub_track)
@@ -196,7 +229,36 @@ local function just_paused_for_sub_end_on_other_track(sub_track)
   return false
 end
 
---- CORE EVENTS -----------------------------------------------------------------------------------
+local function save_curr_sub_lengths(sub_track, sub_time_length, sub_text_length)
+  state.curr_sub_time_length[sub_track] = sub_time_length
+  state.curr_sub_text_length[sub_track] = sub_text_length
+end
+
+local function maybe_perform_start_pause(sub_track)
+  local cfg_start = sub_track_cfg(sub_track, "start")
+
+  if should_skip_for_position("start", cfg_start) then
+    on_pause_skip(sub_track)
+    return
+  end
+
+  if cfg_start.unpause then
+    pause_wait_unpause(sub_track, "start", cfg_start)
+  else
+    pause(sub_track, "start")
+  end
+end
+
+local function maybe_queue_end_pause(sub_track)
+  if should_skip_for_position("end", sub_track_cfg(sub_track, "end")) then
+    on_pause_skip(sub_track)
+    return
+  end
+
+  state.pause_at_sub_end[sub_track] = true
+end
+
+--- CORE EVENTS ------------------------------------------------------------------------------------
 
 local function handle_sub_end_time(sub_track, sub_end_time)
   if not sub_end_time then
@@ -209,69 +271,26 @@ local function handle_sub_end_time(sub_track, sub_end_time)
 
   state.curr_sub_end[sub_track] = sub_end_time
 
-  -- Skip if sub too short in terms of both time and text length
   local sub_start_time = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
   if not sub_start_time then
     return
   end
-  local sub_time_length = sub_end_time - sub_start_time
-  if sub_time_length < cfg.min_sub_time_length_sec then
-    -- NOTE: We need to reveal when skipping, because otherwise having "hide while playing" enabled
-    --       would mean that the sub is never displayed
-    -- TODO: Honor manual visibility changes?
-    set_sub_visibility(sub_track, true)
+
+  local skip, sub_time_length, sub_text_length = should_skip_general(sub_start_time, sub_end_time)
+  if skip then
+    on_pause_skip(sub_track)
     return
   end
-  state.curr_sub_time_length[sub_track] = sub_time_length
-  local sub_text_length =
-    calculate_sub_text_length(mp.get_property(sub_track_property(sub_track, "sub-text")))
-  -- Ignore `0`, since image-based subs have the length of `0`
-  if sub_text_length > 0 and sub_text_length < cfg.min_sub_text_length then
-    set_sub_visibility(sub_track, true)
-    return
-  end
-  state.curr_sub_text_length[sub_track] = sub_text_length
+  save_curr_sub_lengths(sub_track, sub_time_length, sub_text_length)
 
-  -- Handle start pause
-  local cfg_start = sub_track_cfg(sub_track, "start")
-  if cfg_start ~= nil then
-    if should_skip_because_special_sub(cfg_start) then
-      set_sub_visibility(sub_track, true)
-      goto skip
-    end
-
-    if cfg_start.unpause then
-      pause_wait_unpause(sub_track, "start", cfg_start)
-    else
-      pause(sub_track, "start")
-    end
-
-    ::skip::
-  end
-
-  -- Handle end pause
-  local cfg_end = sub_track_cfg(sub_track, "end")
-  if cfg_end ~= nil then
-    if cfg_end.on_request then
-      goto skip
-    end
-
-    if should_skip_because_special_sub(cfg_end) then
-      set_sub_visibility(sub_track, true)
-      goto skip
-    end
-
-    state.pause_at_sub_end[sub_track] = true
-
-    ::skip::
-  end
+  maybe_perform_start_pause(sub_track)
+  maybe_queue_end_pause(sub_track)
 end
 
 local function handle_sub_end_reached(sub_track)
   if not state.pause_at_sub_end[sub_track] then
     return
   end
-
   state.pause_at_sub_end[sub_track] = false
 
   local cfg_end = sub_track_cfg(sub_track, "end")
@@ -304,12 +323,8 @@ local function handle_pause(_, paused)
 end
 
 local handle_sub_end_time_for_sub_track = {
-  function(_, sub_end_time)
-    handle_sub_end_time(1, sub_end_time)
-  end,
-  function(_, sub_end_time)
-    handle_sub_end_time(2, sub_end_time)
-  end,
+  function(_, sub_end_time) handle_sub_end_time(1, sub_end_time) end,
+  function(_, sub_end_time) handle_sub_end_time(2, sub_end_time) end,
 }
 
 local function handle_time_pos(_, time_pos)
@@ -409,14 +424,18 @@ local function init()
   local paused = mp.get_property_bool("pause")
 
   for_each_sub_track(function (track)
-    if sub_track_cfg(track) then
+    local track_cfg = sub_track_cfg(track)
+    if track_cfg then
       state.enabled = true
 
-      mp.observe_property(
-        sub_track_property(track, "sub-end"),
-        "number",
-        handle_sub_end_time_for_sub_track[track]
-      )
+      if track_cfg["start"] or track_cfg["end"] then
+        mp.observe_property(
+          sub_track_property(track, "sub-end"),
+          "number",
+          handle_sub_end_time_for_sub_track[track]
+        )
+      end
+
       if not paused and cfg[track].hide_while_playing then
         set_sub_visibility(track, false)
       end
