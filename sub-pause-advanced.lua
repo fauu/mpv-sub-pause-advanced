@@ -118,7 +118,7 @@ local function suspected_special_sub(ass_text)
   return true
 end
 
---- VARIOUS SUB UTILITIES --------------------------------------------------------------------------
+--- VARIOUS UTILITIES ------------------------------------------------------------------------------
 
 local function set_sub_visibility(sub_track, visible)
   -- NOTE: Limitation: Hiding primary sub also hides secondary sub
@@ -129,6 +129,13 @@ local function seek_to_sub_start(sub_track)
 	local sub_start = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
 	if sub_start ~= nil then
     mp.set_property("time-pos", sub_start + mp.get_property_number("sub-delay"))
+  end
+end
+
+local function invalidate_unpause_timer()
+  if state.unpause_timer ~= nil then
+    state.unpause_timer:kill()
+    state.unpause_timer = nil
   end
 end
 
@@ -169,9 +176,7 @@ local function pause(sub_track, sub_pos)
 end
 
 local function unpause()
-  if state.unpause_timer ~= nil then
-    state.unpause_timer:kill()
-  end
+  invalidate_unpause_timer()
 
   -- NOTE: If both true, honors only first
   if state.replay_on_unpause[1] then
@@ -279,6 +284,24 @@ local function maybe_queue_end_pause(sub_track)
   state.pause_at_sub_end[sub_track] = true
 end
 
+--- CORE FUNCTIONS ---------------------------------------------------------------------------------
+
+local function replay_sub(sub_track)
+  seek_to_sub_start(sub_track)
+  unpause()
+end
+
+local function invalidate_state_due_to_seek()
+  invalidate_unpause_timer()
+  state.curr_sub_end         = {nil, nil}
+  state.curr_sub_time_length = {nil, nil}
+  state.curr_sub_text_length = {nil, nil}
+  state.last_pause_time_pos  = {nil, nil}
+  state.last_pause_sub_pos   = {nil, nil}
+  state.pause_at_sub_end     = {false, false}
+  state.replay_on_unpause    = {false, false}
+end
+
 --- CORE EVENTS ------------------------------------------------------------------------------------
 
 local function handle_sub_end_time(sub_track, sub_end_time)
@@ -329,10 +352,7 @@ end
 
 local function handle_pause(_, paused)
   if not paused then
-    if state.unpause_timer ~= nil then
-      state.unpause_timer:kill()
-      state.unpause_timer = nil
-    end
+    invalidate_unpause_timer()
 
     -- TODO: Honor manual visibility changes?
     for_each_sub_track(function (track)
@@ -340,6 +360,12 @@ local function handle_pause(_, paused)
         set_sub_visibility(track, false)
       end
     end)
+  end
+end
+
+local function handle_seeking(_, seeking)
+  if seeking then
+    invalidate_state_due_to_seek()
   end
 end
 
@@ -386,13 +412,6 @@ local function handle_request_pause_pressed()
   end
 end
 
---- CORE FUNCTIONS ---------------------------------------------------------------------------------
-
-local function replay_sub(sub_track)
-  seek_to_sub_start(sub_track)
-  unpause()
-end
-
 --- INIT/DEINIT ------------------------------------------------------------------------------------
 
 local function init_state()
@@ -412,9 +431,7 @@ local function init_state()
 end
 
 local function reset_state()
-  if state.unpause_timer ~= nil then
-    state.unpause_timer:kill()
-  end
+  invalidate_unpause_timer()
   state.enabled              = false
   state.override             = false
   state.unpause_timer        = nil
@@ -429,6 +446,7 @@ end
 
 local function deinit()
   mp.unobserve_property(handle_pause)
+  mp.unobserve_property(handle_seeking)
   for_each_sub_track(function (track)
     mp.unobserve_property(handle_sub_end_time_for_sub_track[track])
   end)
@@ -451,27 +469,28 @@ local function init()
     if track_cfg then
       state.enabled = true
 
-      if track_cfg["start"] or track_cfg["end"] then
-        mp.observe_property(
-          sub_track_property(track, "sub-end"),
-          "number",
-          handle_sub_end_time_for_sub_track[track]
-        )
-      end
+      mp.observe_property(
+        sub_track_property(track, "sub-end"),
+        "number",
+        handle_sub_end_time_for_sub_track[track]
+      )
 
       if not paused and cfg[track].hide_while_playing then
         set_sub_visibility(track, false)
       end
     end
   end)
+
   if sub_track_cfg(1) or sub_track_cfg(2) then
     mp.observe_property("pause", "bool", handle_pause)
+    mp.observe_property("seeking", "bool", handle_seeking)
 
     local delay_number = tonumber(cfg.sub_delay_secs)
     if delay_number then
       mp.set_property("sub-delay", delay_number)
     end
   end
+
   if sub_track_cfg(1, "end") or sub_track_cfg(2, "end") then
     mp.observe_property("time-pos", "number", handle_time_pos)
   end
