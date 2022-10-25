@@ -322,7 +322,7 @@ length of the subtitle will be a further addition to this value.
 A multiplier used to transform the subtitle text length in characters into the
 auto pause duration in `unpause` mode.
 
-– **`unpause-time-multiplier`** (`3`)
+– **`unpause-time-multiplier`** (`0.57`)
 
 A multiplier used to transform the subtitle time length in seconds into the auto
 pause duration in `unpause-time` mode.
