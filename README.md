@@ -262,7 +262,7 @@ Disable or re-enable pausing and adjacent features (such as subtitle hiding).
 
 Unpause and prevent any pauses while the key remains pressed.
 
-– **`request-pause`** (default: <kbd>Right mouse button</kbd>)
+– **`request-pause`** (default: none; recommendation: <kbd>Right mouse button</kbd>)
 
 When the `request` directive is active, queue a pause for the end of the current
 subtitle. Otherwise, pause immediately. If already paused—unpause.
