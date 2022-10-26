@@ -269,11 +269,11 @@ subtitle. Otherwise, pause immediately. If already paused—unpause.
 
 – **`replay`** (default: <kbd>Ctrl</kbd> + <kbd>r</kbd>)
 
-Replay from the start of the current primary subtitle.
+Replay from the start of the current or previous primary subtitle.
 
 – **`replay-secondary`** (default: none)
 
-Replay from the start of the current secondary subtitle.
+Replay from the start of the current or previous secondary subtitle.
 
 [input.conf]: https://mpv.io/manual/stable/#input-conf
 [key names]: https://mpv.io/manual/stable/#key-names

@@ -149,16 +149,20 @@ local function set_sub_visibility(sub_track, visible)
   mp.set_property_bool(sub_track_property(sub_track, "sub-visibility"), visible)
 end
 
-local function seek_to_sub_start(sub_track)
-	local sub_start = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
-	if sub_start ~= nil then
-    mp.set_property(
-      "time-pos",
-      sub_start
-        + mp.get_property_number("sub-delay")
-        + cfg.sub_start_seek_offset_secs
-    )
+local function seek_to_current_or_last_sub_start(sub_track)
+  local start_wo_delay = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
+  if not start_wo_delay then
+    start_wo_delay = state.last_sub_start_time[sub_track]
   end
+  if not start_wo_delay then
+    return
+  end
+  mp.set_property(
+    "time-pos",
+    start_wo_delay
+      + mp.get_property_number("sub-delay")
+      + cfg.sub_start_seek_offset_secs
+  )
 end
 
 local function invalidate_unpause_timer()
@@ -209,9 +213,9 @@ local function unpause()
 
   -- NOTE: If both true, honors only first
   if state.replay_on_unpause[1] then
-    seek_to_sub_start(1)
+    seek_to_current_or_last_sub_start(1)
   elseif state.replay_on_unpause[2] then
-    seek_to_sub_start(2)
+    seek_to_current_or_last_sub_start(2)
   end
   state.replay_on_unpause = {false, false}
 
@@ -312,7 +316,7 @@ end
 --- CORE FUNCTIONS ---------------------------------------------------------------------------------
 
 local function replay_sub(sub_track)
-  seek_to_sub_start(sub_track)
+  seek_to_current_or_last_sub_start(sub_track)
   unpause()
 end
 
@@ -321,6 +325,7 @@ local function invalidate_state_due_to_seek()
   state.curr_sub_end         = {nil, nil}
   state.curr_sub_time_length = {nil, nil}
   state.curr_sub_text_length = {nil, nil}
+  state.last_sub_start_time  = {nil, nil}
   state.last_pause_time_pos  = {nil, nil}
   state.last_pause_sub_pos   = {nil, nil}
   state.pause_at_sub_end     = {false, false}
@@ -333,6 +338,7 @@ local function handle_sub_end_time(sub_track, sub_end_time)
   if not sub_end_time then
     return
   end
+  state.last_sub_start_time[sub_track] = mp.get_property_number("time-pos")
   if sub_end_time == state.curr_sub_end[sub_track] then
     -- Already handled this pause spot
     return
@@ -464,6 +470,7 @@ local function init_state()
     unpause_timer        = nil,
     curr_sub_end         = {nil, nil},
     curr_sub_time_length = {nil, nil},
+    last_sub_start_time  = {nil, nil},
     last_pause_time_pos  = {nil, nil},
     last_pause_sub_pos   = {nil, nil},
 
@@ -481,6 +488,7 @@ local function reset_state()
   state.curr_sub_end         = {nil, nil}
   state.curr_sub_time_length = {nil, nil}
   state.curr_sub_text_length = {nil, nil}
+  state.last_sub_start_time  = {nil, nil}
   state.last_pause_time_pos  = {nil, nil}
   state.last_pause_sub_pos   = {nil, nil}
   state.pause_at_sub_end     = {false, false}
