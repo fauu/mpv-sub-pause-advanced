@@ -236,7 +236,8 @@ end
 local function on_pause_skip(sub_track)
   -- NOTE: We need to reveal when skipping, because otherwise having "hide while playing" enabled
   --       would mean that the sub is never displayed
-  -- TODO: Honor manual visibility changes?
+  -- TODO: Honor manual visibility changes? (Applies to other places throughout the script where
+  --       the visibility is changed.)
   set_sub_visibility(sub_track, true)
 end
 
@@ -331,6 +332,16 @@ local function handle_sub_end_time(sub_track, sub_end_time)
   maybe_queue_end_pause(sub_track)
 end
 
+local function handle_sub_text(sub_track, sub_text)
+  if sub_text == nil then
+    return
+  end
+  -- Sometimes, for overlapping subs, we receive `sub-text` but no `sub-end`. In that case, a pause
+  -- won't happen (see known issue #I in README), but we can at least reveal the subtitle in case
+  -- it's hidden, so that it's not missed completely
+  set_sub_visibility(sub_track, true)
+end
+
 local function handle_sub_end_reached(sub_track)
   if not state.pause_at_sub_end[sub_track] then
     return
@@ -371,9 +382,14 @@ local function handle_seeking(_, seeking)
   end
 end
 
-local handle_sub_end_time_for_sub_track = {
+local handle_sub_end_time_for_track = {
   function(_, sub_end_time) handle_sub_end_time(1, sub_end_time) end,
   function(_, sub_end_time) handle_sub_end_time(2, sub_end_time) end,
+}
+
+local handle_sub_text_for_track = {
+  function(_, sub_text) handle_sub_text(1, sub_text) end,
+  function(_, sub_text) handle_sub_text(2, sub_text) end,
 }
 
 local function handle_time_pos(_, time_pos)
@@ -450,7 +466,8 @@ local function deinit()
   mp.unobserve_property(handle_pause)
   mp.unobserve_property(handle_seeking)
   for_each_sub_track(function (track)
-    mp.unobserve_property(handle_sub_end_time_for_sub_track[track])
+    mp.unobserve_property(handle_sub_end_time_for_track[track])
+    mp.unobserve_property(handle_sub_text_for_track[track])
   end)
   mp.unobserve_property(handle_time_pos)
   reset_state()
@@ -474,8 +491,16 @@ local function init()
       mp.observe_property(
         sub_track_property(track, "sub-end"),
         "number",
-        handle_sub_end_time_for_sub_track[track]
+        handle_sub_end_time_for_track[track]
       )
+
+      if track_cfg["start"] then
+        mp.observe_property(
+          sub_track_property(track, "sub-text"),
+          "string",
+          handle_sub_text_for_track[track]
+        )
+      end
 
       if not paused and cfg[track].hide_while_playing then
         set_sub_visibility(track, false)
