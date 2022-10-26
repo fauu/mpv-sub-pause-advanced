@@ -152,7 +152,12 @@ end
 local function seek_to_sub_start(sub_track)
 	local sub_start = mp.get_property_number(sub_track_property(sub_track, "sub-start"))
 	if sub_start ~= nil then
-    mp.set_property("time-pos", sub_start + mp.get_property_number("sub-delay"))
+    mp.set_property(
+      "time-pos",
+      sub_start
+        + mp.get_property_number("sub-delay")
+        + cfg.sub_start_seek_offset_secs
+    )
   end
 end
 
@@ -234,7 +239,7 @@ end
 local function should_skip_general(sub_start_time, sub_end_time)
   -- Skip if sub too short in terms of both time and text length
   local sub_time_length = sub_end_time - sub_start_time
-  if sub_time_length < cfg.min_sub_time_length_sec then
+  if sub_time_length < cfg.min_sub_time_length_secs then
     return true, nil, nil
   end
   local sub_text_length = current_nospecial_sub_text_length()
@@ -420,7 +425,7 @@ local function handle_time_pos(_, time_pos)
   for_each_sub_track(function (track)
     if state.curr_sub_end[track] then
       local sub_end_with_delay = state.curr_sub_end[track] + mp.get_property_number("sub-delay")
-      if sub_end_with_delay - time_pos <= cfg.sub_end_delta then
+      if sub_end_with_delay - time_pos <= cfg.sub_end_delta_secs then
         handle_sub_end_reached(track)
       end
     end
@@ -576,17 +581,18 @@ end
 
 local function parse_cfg()
   local new_cfg = {
-    sub_end_delta           = 0.1,
+    sub_end_delta_secs         = 0.1,
+    sub_start_seek_offset_secs = -0.05,
 
-    min_sub_time_length_sec = options["min-sub-duration"],
-    min_sub_text_length     = options["min-sub-text-length"],
-    min_pause_duration_secs = options["min-pause-duration"],
-    unpause_base_secs       = options["unpause-base"],
-    unpause_text_multiplier = options["unpause-text-multiplier"],
-    unpause_time_multiplier = options["unpause-time-multiplier"],
-    unpause_exponent        = options["unpause-exponent"],
-    pair_sub_max_delta_secs = options["pair-sub-max-delta"],
-    sub_delay_secs          = options["sub-delay"],
+    min_sub_time_length_secs = options["min-sub-duration"],
+    min_sub_text_length      = options["min-sub-text-length"],
+    min_pause_duration_secs  = options["min-pause-duration"],
+    unpause_base_secs        = options["unpause-base"],
+    unpause_text_multiplier  = options["unpause-text-multiplier"],
+    unpause_time_multiplier  = options["unpause-time-multiplier"],
+    unpause_exponent         = options["unpause-exponent"],
+    pair_sub_max_delta_secs  = options["pair-sub-max-delta"],
+    sub_delay_secs           = options["sub-delay"],
   }
 
   for part in options.setup:gmatch("[%w%_-%!%.]+") do
