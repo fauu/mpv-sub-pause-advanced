@@ -127,8 +127,8 @@ local function current_nospecial_sub_text_length()
 
     for line in lines(ass_text) do
       if not has_special_ass_code(line) then
-        -- TODO: Do not count other ASS directives
-        len = len + strlen(line)
+        local noass_line = line:gsub("%b{}", "")
+        len = len + strlen(noass_line)
       end
     end
 
