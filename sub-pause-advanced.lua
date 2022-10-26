@@ -42,6 +42,15 @@ local function debug_dump(o)
   end
 end
 
+local function lines(s)
+  return s:gmatch("[^\r\n]+")
+end
+
+local function strlen(s)
+  local _, len = s:gsub("[^\128-\193]", "")
+  return len
+end
+
 --- CONFIG UTILITIES -----------------------------------------------------------------------------------
 
 local function sub_track_cfg(sub_track, sub_pos, key)
@@ -88,11 +97,6 @@ end
 
 --- SUB TEXT UTILITIES -----------------------------------------------------------------------------
 
-local function calculate_sub_text_length(text)
-  local _, len = text:gsub("[^\128-\193]", "")
-  return len
-end
-
 local special_ass_codes = {"pos", "move", "kf", "fad"}
 
 local function has_special_ass_code(s)
@@ -110,13 +114,33 @@ local function suspected_special_sub(ass_text)
     return false
   end
   -- Consider as special sub only if *all* lines have certain ASS codes
-  for line in ass_text:gmatch("[^\r\n]+") do
+  for line in lines(ass_text) do
     if not has_special_ass_code(line) then
       return false
     end
   end
   return true
 end
+
+local function current_nospecial_sub_text_length()
+  -- If ASS subtitle available, count only lines not containing 'special' ASS codes
+  local ass_text = mp.get_property("sub-text-ass")
+  if ass_text and #ass_text > 0 then
+    local len = 0
+
+    for line in lines(ass_text) do
+      if not has_special_ass_code(line) then
+        -- TODO: Do not count other ASS directives
+        len = len + strlen(line)
+      end
+    end
+
+    return len
+  end
+
+  return strlen(mp.get_property("sub-text"))
+end
+
 
 --- VARIOUS UTILITIES ------------------------------------------------------------------------------
 
@@ -213,7 +237,7 @@ local function should_skip_general(sub_start_time, sub_end_time)
   if sub_time_length < cfg.min_sub_time_length_sec then
     return true, nil, nil
   end
-  local sub_text_length = calculate_sub_text_length(mp.get_property("sub-text"))
+  local sub_text_length = current_nospecial_sub_text_length()
 
   -- Ignore `0`, since image-based subs have the length of `0`
   if sub_text_length > 0 and sub_text_length < cfg.min_sub_text_length then
@@ -254,11 +278,6 @@ local function just_paused_for_sub_end_on_other_track(sub_track)
     end
   end
   return false
-end
-
-local function save_curr_sub_lengths(sub_track, sub_time_length, sub_text_length)
-  state.curr_sub_time_length[sub_track] = sub_time_length
-  state.curr_sub_text_length[sub_track] = sub_text_length
 end
 
 local function maybe_perform_start_pause(sub_track)
@@ -326,7 +345,8 @@ local function handle_sub_end_time(sub_track, sub_end_time)
     on_pause_skip(sub_track)
     return
   end
-  save_curr_sub_lengths(sub_track, sub_time_length, sub_text_length)
+  state.curr_sub_time_length[sub_track] = sub_time_length
+  state.curr_sub_text_length[sub_track] = sub_text_length
 
   maybe_perform_start_pause(sub_track)
   maybe_queue_end_pause(sub_track)
