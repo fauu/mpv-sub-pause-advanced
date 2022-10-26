@@ -393,7 +393,6 @@ local function handle_pause(_, paused)
   if not paused then
     invalidate_unpause_timer()
 
-    -- TODO: Honor manual visibility changes?
     if not state.override then
       for_each_sub_track(function (track)
         if sub_track_cfg(track, nil, "hide_while_playing") then
@@ -470,10 +469,8 @@ local function init_state()
     last_sub_start_time  = {nil, nil},
     last_pause_time_pos  = {nil, nil},
     last_pause_sub_pos   = {nil, nil},
-
-    -- TODO: Both probably need to be cleared on seek or sth to invalidate possible pause request
-    pause_at_sub_end =  {false, false},
-    replay_on_unpause = {false, false}
+    pause_at_sub_end     =  {false, false},
+    replay_on_unpause    = {false, false}
   }
 end
 
@@ -502,10 +499,7 @@ local function deinit()
   mp.unobserve_property(handle_time_pos)
   reset_state()
 
-  -- TODO: Honor manual visibility changes?
-  for_each_sub_track(function (track)
-    set_sub_visibility(track, true)
-  end)
+  for_each_sub_track(function (track) set_sub_visibility(track, true) end)
 end
 
 local function init()
