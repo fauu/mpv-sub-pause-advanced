@@ -178,7 +178,7 @@ Automatically unpause playback after a time interval calculated on the basis
 of the subtitle text length. Note that this will not work properly for
 image-based subtitled — for those, the `-time` argument must be used.
 
-<u>Arguments:</u>
+<ins>Arguments:</ins>
 
 `unpause-time` — calculate the unpause interval based on the subtitle’s defined
 playback time instead. Necessary for image-based subtitles, although it will not
@@ -367,4 +367,4 @@ the `start` position work. But it would only work for text-based subtitles and
 would therefore have to be implemented as an extra special case, which probably
 is not worth the extra complexity.
 
-<u>Reproduction:</u> *Hanasaku Iroha - E15* (Doki) `sub-pause-setup=start --start=2:00`
+<ins>Reproduction:</ins> *Hanasaku Iroha - E15* (Doki) `sub-pause-setup=start --start=2:00`
