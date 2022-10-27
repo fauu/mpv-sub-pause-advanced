@@ -9,10 +9,13 @@
 
 > A versatile [mpv] media player script for pausing video playback for subtitles
 
-*Note: This script has not been thoroughly tested yet for all of its possible
-configuration combinations. Please feel encouraged to report any suspected
-issues / incompatibilities / unexpected behaviours by creating a
-[Github issue][issues].*
+<!-- -->
+
+> **Warning**
+> This script has not been thoroughly tested yet for all of its possible
+> configuration combinations. Please feel encouraged to report any suspected
+> issues / incompatibilities / unexpected behaviours by creating a
+> [Github issue][issues].*
 
 [issues]: https://github.com/fauu/mpv-sub-pause-advanced/issues
 [mpv]: https://mpv.io/
@@ -90,18 +93,19 @@ instructs the script to pause at the end of each secondary subtitle:
 [mpv config]: https://mpv.io/manual/stable/#configuration-files
 [custom profile]: https://mpv.io/manual/stable/#profiles
 
-**Note: By default, pausing will be skipped when the subtitle does not met
-certain conditions:**
-
-1. The subtitle’s time duration is below the default threshold.
-
-1. The subtitle’s text length is above zero but below the default threshold.
-
-1. Auto unpause is enabled and the subtitle’s calculated pause duration is below
-   the default threshold.
-
-The values of these defaults and the way to override them are described in the
-section [Extra options](#extra-options).
+> **Note**
+> By default, pausing will be skipped when the subtitle does not met certain
+> conditions:
+>
+> 1. The subtitle’s time duration is below the default threshold.
+>
+> 1. The subtitle’s text length is above zero but below the default threshold.
+>
+> 1. Auto unpause is enabled and the subtitle’s calculated pause duration is
+>    below the default threshold.
+>
+> The values of these defaults and the way to override them are described in the
+> section [Extra options](#extra-options).
 
 ## The setup definition
 
@@ -200,9 +204,11 @@ Only pause if requested through the pause request key binding.
 ##### – `hide`
 
 Hide the subtitle during playback. Needs to be specified only once per subtitle
-track.\
-**Note:** Due to an mpv limitation, hiding primary subtitles will always hide
-secondary subtitles as well.
+track.
+
+> **Note**
+> Due to an mpv limitation, hiding primary subtitles will always hide secondary
+> subtitles as well.
 
 Subtitles that do not qualify for a pause will not be hidden.
 
@@ -294,7 +300,8 @@ mpv file.mkv --script-opts=sub-pause-setup=start##end,sub-pause-min-sub-duration
 
 ### Option list
 
-> **Note:** All options must be additionally prefixed with `sub-pause-`.
+> **Note**
+> All options must be additionally prefixed with `sub-pause-`.
 
 – **`min-sub-duration`** (seconds; default: `1`)
 
