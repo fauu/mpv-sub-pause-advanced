@@ -2,7 +2,8 @@
 <!-- markdownlint-configure-file
 {
   "line-length": { "code_blocks": false },
-  "no-inline-html": false
+  "no-inline-html": false,
+  "fenced-code-language": false
 }
 -->
 # mpv-sub-pause-advanced
@@ -12,10 +13,10 @@
 <!-- -->
 
 > **Warning**
-> This script has not been thoroughly tested yet for all of its possible
+> This script has not been thoroughly tested yet with all of its possible
 > configuration combinations. Please feel encouraged to report any suspected
 > issues / incompatibilities / unexpected behaviours by creating a
-> [Github issue][issues].*
+> [Github issue][issues].
 
 [issues]: https://github.com/fauu/mpv-sub-pause-advanced/issues
 [mpv]: https://mpv.io/
@@ -67,26 +68,26 @@ instructs the script to pause at the end of each secondary subtitle:
 
 1. Directly when launching mpv:
 
-    ```txt
+    ```sh
     mpv file.mkv --script-opts=sub-pause-setup=2end
     ```
 
 1. Globally in [mpv config]:
 
-    ```txt
+    ```
     script-opts=sub-pause-setup=2end
     ```
 
 1. As a [custom profile] in [mpv config]:
 
-    ```txt
+    ```
     [my-sub-pause-profile]
     script-opts=sub-pause-setup=2end
     ```
 
     then enable electively when starting mpv:
 
-    ```txt
+    ```sh
     mpv file.mkv --profile=my-sub-pause-profile
     ```
 
@@ -120,7 +121,7 @@ secondary subtitle, end of secondary subtitle.
 For example, the following definition enables pause at the start of the
 secondary subtitle and at the end of the primary subtitle:
 
-```txt
+```
 2start##end
 ```
 
@@ -135,7 +136,7 @@ above definition with the options:
 
 the following setup definition ought to be specified:
 
-```txt
+```
 2start!hide##end!unpause
 ```
 
@@ -144,7 +145,7 @@ it so that, on top of the previous configuration, the pause at the end of a
 primary subtitle only happens if a specified pause request key is pressed before
 the end of the subtitle is reached, the definition should read:
 
-```txt
+```
 2start!hide##end!unpause!request
 ```
 
@@ -153,7 +154,7 @@ character, that additionally modify their behaviour. For example, to prolong the
 interval before the automatic unpause for the end of a primary subtitle, for
 example by factor of 1.5, specify:
 
-```txt
+```
 2start!hide##end!unpause-1.5!request
 ```
 
@@ -224,7 +225,7 @@ Skip pause to avoid two consecutive pauses in case when we just recently paused
 for the end of the subtitle on the other track. In other words, the following
 setup definition:
 
-```txt
+```
 end!race##2end!race
 ```
 
@@ -250,7 +251,7 @@ none is assigned by default or to assign a different one, add an appropriate
 For example, to have the key <kbd>N</kbd> (i.e., <kbd>Shift</kbd> + <kbd>n</kbd>)
 turn the script off and back on, add the line:
 
-```txt
+```
 N script-binding sub_pause_advanced/toggle-pausing
 ```
 
@@ -294,7 +295,7 @@ For example, to specify custom values for the minimum subtitle time duration and
 the minimum subtitle text length qualifying for a pause, provide the following
 script options to mpv:
 
-```txt
+```sh
 mpv file.mkv --script-opts=sub-pause-setup=start##end,sub-pause-min-sub-duration=2,sub-pause-min-sub-text-length=10
 ```
 
