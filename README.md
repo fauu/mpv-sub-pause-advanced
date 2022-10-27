@@ -42,7 +42,7 @@
 ## Table of contents
 
 1. [Installation](#installation)
-2. [Base usage](#base-usage)
+2. [Basic usage](#basic-usage)
 3. [The setup definition](#the-setup-definition)
     * [Form](#form)
     * [All setup parameters](#all-setup-parameters)
@@ -60,7 +60,7 @@ manual).
 [mpv-script-location]: https://mpv.io/manual/stable/#script-location
 [script file]: https://raw.githubusercontent.com/fauu/mpv-sub-pause-advanced/master/sub-pause-advanced.lua
 
-## Base usage
+## Basic usage
 
 To enable the script, provide a setup definition as a script option to mpv. Here
 is an illustration of different ways to provide the setup definition `2end`, which
