@@ -547,10 +547,6 @@ local function init()
   end
 end
 
-local function handle_primary_sub_track()
-  init()
-end
-
 local function handle_toggle_pressed()
   local state_str
   if state.enabled then
@@ -671,15 +667,18 @@ end
 local function main()
   require("mp.options").read_options(options, "sub-pause")
   cfg = parse_cfg()
-  print(debug_dump(cfg))
-  init_state()
-  mp.observe_property("current-tracks/sub/id", "number", handle_primary_sub_track)
 
-  mp.add_key_binding(nil, "toggle-pausing", handle_toggle_pressed)
-  mp.add_key_binding(nil, "override-pausing", handle_override_binding, {complex = true})
-  mp.add_key_binding(nil, "request-pause", handle_request_pause_pressed)
-  mp.add_key_binding(DefaultKeys["replay"], "replay", function() replay_sub(1) end)
-  mp.add_key_binding(nil, "replay-secondary", function() replay_sub(2) end)
+  if sub_track_cfg(1) or sub_track_cfg(2) then
+    init_state()
+
+    mp.observe_property("current-tracks/sub/id", "number", init)
+
+    mp.add_key_binding(nil, "toggle-pausing", handle_toggle_pressed)
+    mp.add_key_binding(nil, "override-pausing", handle_override_binding, {complex = true})
+    mp.add_key_binding(nil, "request-pause", handle_request_pause_pressed)
+    mp.add_key_binding(DefaultKeys["replay"], "replay", function() replay_sub(1) end)
+    mp.add_key_binding(nil, "replay-secondary", function() replay_sub(2) end)
+  end
 end
 
 main()
