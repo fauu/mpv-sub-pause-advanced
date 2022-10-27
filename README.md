@@ -194,11 +194,11 @@ options](#extra-options).
 
 ##### – `request`
 
-*Valid only for the `end` position.*
+> *Valid only for the `end` position.*
 
 Only pause if requested through the pause request key binding.
 
-<u>Arguments:</u>
+<ins>Arguments:</ins>
 
 `request-replay` — replay from the start of the subtitle after unpausing.
 
@@ -213,13 +213,13 @@ track.
 
 Subtitles that do not qualify for a pause will not be hidden.
 
-<u>Arguments:</u>
+<ins>Arguments:</ins>
 
 `hide-more` — hide also while paused for the other subtitle track.
 
 ##### – `race`
 
-*Valid only for the `end` position.*
+> *Valid only for the `end` position.*
 
 Skip pause to avoid two consecutive pauses in case when we just recently paused
 for the end of the subtitle on the other track. In other words, the following
