@@ -258,7 +258,7 @@ N script-binding sub_pause_advanced/toggle-pausing
 (Note the underscores.)
 
 To set other bindings, replace, in the example above, `N` with the desired key
-(see [key names] in mpv manual) and `toggle-pausing` with the name of one of
+(see [Key names] in mpv manual) and `toggle-pausing` with the name of one of
 the other bindings listed below.
 
 – **`toggle-pausing`** (default: none; recommendation: <kbd>N</kbd>)
@@ -283,7 +283,7 @@ Replay from the start of the current or previous primary subtitle.
 Replay from the start of the current or previous secondary subtitle.
 
 [input.conf]: https://mpv.io/manual/stable/#input-conf
-[key names]: https://mpv.io/manual/stable/#key-names
+[Key names]: https://mpv.io/manual/stable/#key-names
 
 ## Extra options
 
