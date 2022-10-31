@@ -23,11 +23,11 @@
 
 ## Main features
 
-* Independently configure pausing at the start/end of the primary/secondary
+* Independently set up pausing at the start/end of the primary/secondary
   subtitle track.
 
 * Automatically unpause after a time period dependent on the subtitle
-  length (either text length or time duration).
+  length (text length or time duration).
 
 * Pause on request: press a key to request a pause at the end of the current
   subtitle.
@@ -37,7 +37,7 @@
 * Skip pausing for special subtitles, such as karaoke subtitles or sign
   subtitles.
 
-* Hide subtitle when playing or when paused for another subtitle track.
+* Hide a subtitle while playing or when paused for another subtitle track.
 
 ## Table of contents
 
@@ -53,18 +53,20 @@
 
 ## Installation
 
-Download the [script file] and place it in the `scripts` subdirectory of the
+Download the [script file] (click on the `Raw` button and then press
+<kbd>Ctrl</kbd> + <kbd>S</kbd>), placing it in the `scripts` subdirectory of the
 mpv configuration directory (see [Script location][mpv-script-location] in mpv
 manual).
 
 [mpv-script-location]: https://mpv.io/manual/stable/#script-location
+[script file]: https://github.com/fauu/mpv-sub-pause-advanced/blob/master/sub-pause-advanced.lua
 [script file]: https://raw.githubusercontent.com/fauu/mpv-sub-pause-advanced/master/sub-pause-advanced.lua
 
 ## Basic usage
 
 To enable the script, provide a setup definition as a script option to mpv. Here
 is an illustration of different ways to provide the setup definition `2end`, which
-instructs the script to pause at the end of each secondary subtitle:
+instructs the script to pause at the end of each *secondary* subtitle:
 
 1. Directly when launching mpv:
 
@@ -78,7 +80,7 @@ instructs the script to pause at the end of each secondary subtitle:
     script-opts=sub-pause-setup=2end
     ```
 
-1. As a [custom profile] in [mpv config]:
+1. As a [custom profile] in mpv config:
 
     ```
     [my-sub-pause-profile]
@@ -95,8 +97,8 @@ instructs the script to pause at the end of each secondary subtitle:
 [custom profile]: https://mpv.io/manual/stable/#profiles
 
 > **Note**
-> By default, pausing will be skipped when the subtitle does not met certain
-> conditions:
+> **By default, pausing will be skipped when the subtitle does not met certain
+> conditions:**
 >
 > 1. The subtitle’s time duration is below the default threshold.
 >
@@ -113,7 +115,7 @@ instructs the script to pause at the end of each secondary subtitle:
 ### Form
 
 The setup definition is a string of characters that tells the script when to
-pause and how to do it. It is made up of up to four parts separated with the
+pause and how to do it. It consists of up to four *parts* separated with the
 characters `##`. Those parts each define a pause point in one of four available
 positions: start of primary subtitle, end of primary subtitle, start of
 secondary subtitle, end of secondary subtitle.
@@ -129,18 +131,18 @@ Furthermore, each of the parts can be modified with extra configuration
 directives separated with the `!` character. For example, to extend the
 above definition with the options:
 
-1. Hide the secondary subtitle while playing, and
+1. Hide the secondary subtitle while playing.
 
 1. Once paused at the end of a primary subtitle, wait a bit and then
-  automatically unpause
+  automatically unpause.
 
-the following setup definition ought to be specified:
+the following setup definition should be specified:
 
 ```
 2start!hide##end!unpause
 ```
 
-Multiple directives can be provided within a single part. For example, to make
+Multiple directives can be provided within a single *part*. For example, to make
 it so that, on top of the previous configuration, the pause at the end of a
 primary subtitle only happens if a specified pause request key is pressed before
 the end of the subtitle is reached, the definition should read:
@@ -151,8 +153,8 @@ the end of the subtitle is reached, the definition should read:
 
 Finally, some directives can have extra arguments, separated with the `-`
 character, that additionally modify their behaviour. For example, to prolong the
-interval before the automatic unpause for the end of a primary subtitle, for
-example by factor of 1.5, specify:
+interval before the automatic unpause for the end of a primary subtitle by
+a factor of 1.5, specify:
 
 ```
 2start!hide##end!unpause-1.5!request
@@ -160,7 +162,7 @@ example by factor of 1.5, specify:
 
 ### All setup parameters
 
-#### Position specifiers
+#### Pause position specifiers
 
 `start` — start of each primary subtitle.
 
@@ -174,20 +176,17 @@ example by factor of 1.5, specify:
 
 ##### – `unpause`
 
-Automatically unpause playback after a time interval calculated on the basis
-of the subtitle text length. Note that this will not work properly for
-image-based subtitled — for those, the `-time` argument must be used.
+Automatically unpause after a time interval calculated on the basis of the
+subtitle text length. Note that this will not work properly for image-based
+subtitled—for those, the `-time` argument must be used.
 
 <ins>Arguments:</ins>
 
 `unpause-time` — calculate the unpause interval based on the subtitle’s defined
-playback time instead. Necessary for image-based subtitles, although it will not
-be as accurate as the default option for text subtitles.
+playback time instead.
 
-`unpause[-time]-<number>`
-
-Multiply the calculated unpause interval by `<number>`. Supports decimal parts,
-for example `0.75`.
+`unpause[-time]-<number>` — multiply the calculated unpause interval by
+`<number>`. Supports decimal parts, for example `0.75`.
 
 Advanced modifications to the calculation formula can be made through [Extra
 options](#extra-options).
@@ -196,22 +195,21 @@ options](#extra-options).
 
 > *Valid only for the `end` position.*
 
-Only pause if requested through the pause request key binding.
+Only pause if requested through the pause request key binding (see [Key
+bindings](#key-bindings)).
 
 <ins>Arguments:</ins>
 
-`request-replay` — replay from the start of the subtitle after unpausing.
+`request-replay` — after unpause, replay from the start of the subtitle.
 
 ##### – `hide`
 
-Hide the subtitle during playback. Needs to be specified only once per subtitle
-track.
+Hide the subtitle during playback, unless it does not qualify for a pause.
+(Only needs to be specified once per subtitle track.)
 
 > **Note**
 > Due to an mpv limitation, hiding primary subtitles will always hide secondary
 > subtitles as well.
-
-Subtitles that do not qualify for a pause will not be hidden.
 
 <ins>Arguments:</ins>
 
@@ -229,11 +227,12 @@ setup definition:
 end!race##2end!race
 ```
 
-should lead to only one pause at the end of each subtitled line, at time
-position dependent on whichever track has its subtitle ending earlier.
+provided the two subtitle tracks are reasonably synchronized, should lead to
+only one pause at the end of each subtitled line, at time position dependent on
+whichever track has its subtitle ending earlier.
 
 The playback time interval, counting from the previous pause, within which this
-option is active, can be customized through the [extra option](#extra-options)
+skip is active, can be customized through the [extra option](#extra-options)
 `pair-sub-max-delta`.
 
 ##### – `special`
@@ -267,9 +266,9 @@ Disable or re-enable pausing and adjacent features (such as subtitle hiding).
 
 – **`override-pausing`** (default: none; recommendation: <kbd>n</kbd>)
 
-Unpause and prevent any pauses while the key remains pressed.
+Unpause and prevent any pauses *while the key remains pressed*.
 
-– **`request-pause`** (default: none; recommendation: <kbd>Right mouse button</kbd>)
+– **`request-pause`** (default: none; recommendation: <kbd>MBTN_RIGHT</kbd>)
 
 When the `request` directive is active, queue a pause for the end of the current
 subtitle. Otherwise, pause immediately. If already paused—unpause.
@@ -289,13 +288,13 @@ Replay from the start of the current or previous secondary subtitle.
 
 Besides the setup definition, the script accepts several additional advanced
 configuration options. The options should be appended to the same `script-opts`
-mpv property used to specify the setup definition.
+mpv property that is used to specify the setup definition.
 
 For example, to specify custom values for the minimum subtitle time duration and
 the minimum subtitle text length qualifying for a pause, provide the following
 script options to mpv:
 
-```sh
+```
 mpv file.mkv --script-opts=sub-pause-setup=start##end,sub-pause-min-sub-duration=2,sub-pause-min-sub-text-length=10
 ```
 
@@ -312,18 +311,18 @@ amount of seconds.
 – **`min-sub-text-length`** (characters; default: `5`)
 
 Do not pause for subtitles that are shorter than this amount of characters.
-(Ignored if the length is equal to `0` to not conflict with image-based
+(Ignored if the length is equal to `0` to not include all image-based
 subtitles).
 
 – **`min-pause-duration`** (seconds; default: `0.5`)
 
-If automatic unpausing is enabled, do not pause unless the calculated pause
+If [`unpause`](#directives) is enabled, do not pause unless the calculated pause
 duration is at least this amount of seconds.
 
 – **`unpause-base`** (seconds; default: `0.4`)
 
-Base automatic pause duration in seconds. Extra pause time dependend on the
-length of the subtitle will be a further addition to this value.
+Base automatic pause duration in seconds. Extra pause time dependent on the
+length of the subtitle will be a further addition to this base value.
 
 – **`unpause-text-multiplier`** (default: `0.017`)
 
