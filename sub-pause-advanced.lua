@@ -172,15 +172,16 @@ end
 --- PAUSE/UNPAUSE FUNCTIONS ------------------------------------------------------------------------
 
 local function unpause_interval(sub_track, mode, scale)
-  local unscaled = cfg.unpause_base_secs
+  local length = nil
+  local multiplier = nil
   if mode == UnpauseMode.TEXT then
-    local text_length = state.curr_sub_text_length[sub_track]
-    unscaled = unscaled + (cfg.unpause_text_multiplier * text_length^cfg.unpause_exponent)
+    length = state.curr_sub_text_length[sub_track]
+    multiplier = cfg.unpause_text_multiplier
   elseif mode == UnpauseMode.TIME then
-    local time_length = state.curr_sub_time_length[sub_track]
-    unscaled = unscaled + (cfg.unpause_time_multiplier * time_length^cfg.unpause_exponent)
+    length = state.curr_sub_time_length[sub_track]
+    multiplier = cfg.unpause_time_multiplier
   end
-  return scale * unscaled
+  return scale * (cfg.unpause_base_secs + (multiplier * length^cfg.unpause_exponent))
 end
 
 local function pause(sub_track, sub_pos)
