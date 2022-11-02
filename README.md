@@ -369,7 +369,7 @@ is not worth the extra complexity.
 
 <ins>Reproduction:</ins> *Hanasaku Iroha - E15* (Doki) `sub-pause-setup=start --start=2:00`
 
-# Credits
+## Credits
 
 Inspired by [sub-pause] by @Ben-Kerman.
 
