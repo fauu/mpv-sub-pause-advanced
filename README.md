@@ -50,6 +50,7 @@
 5. [Extra options](#extra-options)
     * [Option list](#option-list)
 6. [Known issues](#known-issues)
+7. [Credits](#credits)
 
 ## Installation
 
@@ -367,3 +368,9 @@ would therefore have to be implemented as an extra special case, which probably
 is not worth the extra complexity.
 
 <ins>Reproduction:</ins> *Hanasaku Iroha - E15* (Doki) `sub-pause-setup=start --start=2:00`
+
+# Credits
+
+Inspired by [sub-pause] by @Ben-Kerman.
+
+[sub-pause]: https://github.com/Ben-Kerman/mpv-sub-scripts/
