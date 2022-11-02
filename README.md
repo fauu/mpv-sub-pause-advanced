@@ -371,6 +371,6 @@ is not worth the extra complexity.
 
 ## Credits
 
-Inspired by [sub-pause] by @Ben-Kerman.
+Inspired by [sub-pause] from @Ben-Kerman.
 
 [sub-pause]: https://github.com/Ben-Kerman/mpv-sub-scripts/
