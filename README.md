@@ -97,6 +97,8 @@ instructs the script to pause at the end of each *secondary* subtitle:
 [mpv config]: https://mpv.io/manual/stable/#configuration-files
 [custom profile]: https://mpv.io/manual/stable/#profiles
 
+---
+
 > **Note**
 > **By default, pausing will be skipped when the subtitle does not met certain
 > conditions:**
