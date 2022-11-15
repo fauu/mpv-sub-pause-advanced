@@ -211,8 +211,8 @@ Hide the subtitle during playback, unless it does not qualify for a pause.
 (Only needs to be specified once per subtitle track.)
 
 > **Warning**
-> In mpv 0.34 and earlier, hiding primary subtitles hides secondary subtitles as
-> well.
+> In mpv 0.34 and earlier, hiding primary subtitles also hides secondary
+> subtitles.
 
 <ins>Arguments:</ins>
 
