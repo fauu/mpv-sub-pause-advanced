@@ -210,9 +210,9 @@ bindings](#key-bindings)).
 Hide the subtitle during playback, unless it does not qualify for a pause.
 (Only needs to be specified once per subtitle track.)
 
-> **Note**
-> Due to an mpv limitation, hiding primary subtitles will always hide secondary
-> subtitles as well.
+> **Warning**
+> In mpv 0.34 and earlier, hiding primary subtitles hides secondary subtitles as
+> well.
 
 <ins>Arguments:</ins>
 
