@@ -145,8 +145,8 @@ local function set_sub_visibility(sub_track, visible)
   mp.set_property_bool(sub_track_property(sub_track, "sub-visibility"), visible)
   if not state.skip_next_osd_clear then
     mp.osd_message(" ", 0.001) -- Force redraw
-    state.skip_next_osd_clear = false
   end
+  state.skip_next_osd_clear = false
 end
 
 local function seek_to_current_or_last_sub_start(sub_track)
