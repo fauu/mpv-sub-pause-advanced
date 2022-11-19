@@ -141,12 +141,21 @@ end
 
 --- VARIOUS UTILITIES ------------------------------------------------------------------------------
 
+local function message(s, duration_secs)
+  mp.osd_message(s, duration_secs)
+  state.last_message_time_ts = os.time()
+  state.last_message_duration_secs = duration_secs
+end
+
+local function is_displaying_message()
+  return os.time() <= state.last_message_time_ts + state.last_message_duration_secs
+end
+
 local function set_sub_visibility(sub_track, visible)
   mp.set_property_bool(sub_track_property(sub_track, "sub-visibility"), visible)
-  if not state.skip_next_osd_clear then
+  if not is_displaying_message() then
     mp.osd_message(" ", 0.001) -- Force redraw
   end
-  state.skip_next_osd_clear = false
 end
 
 local function seek_to_current_or_last_sub_start(sub_track)
@@ -465,34 +474,36 @@ end
 
 local function init_state()
   state = {
-    enabled              = false,
-    override             = false,
-    unpause_timer        = nil,
-    curr_sub_end         = {nil, nil},
-    curr_sub_time_length = {nil, nil},
-    last_sub_start_time  = {nil, nil},
-    last_pause_time_pos  = {nil, nil},
-    last_pause_sub_pos   = {nil, nil},
-    pause_at_sub_end     = {false, false},
-    replay_on_unpause    = {false, false},
-    skip_next_osd_clear  = false,
+    enabled                    = false,
+    override                   = false,
+    unpause_timer              = nil,
+    curr_sub_end               = {nil, nil},
+    curr_sub_time_length       = {nil, nil},
+    last_sub_start_time        = {nil, nil},
+    last_pause_time_pos        = {nil, nil},
+    last_pause_sub_pos         = {nil, nil},
+    pause_at_sub_end           = {false, false},
+    replay_on_unpause          = {false, false},
+    last_message_time_ts       = 0,
+    last_message_duration_secs = 0
   }
 end
 
 local function reset_state()
   invalidate_unpause_timer()
-  state.enabled              = false
-  state.override             = false
-  state.unpause_timer        = nil
-  state.curr_sub_end         = {nil, nil}
-  state.curr_sub_time_length = {nil, nil}
-  state.curr_sub_text_length = {nil, nil}
-  state.last_sub_start_time  = {nil, nil}
-  state.last_pause_time_pos  = {nil, nil}
-  state.last_pause_sub_pos   = {nil, nil}
-  state.pause_at_sub_end     = {false, false}
-  state.replay_on_unpause    = {false, false}
-  state.skip_next_osd_clear  = false
+  state.enabled                    = false
+  state.override                   = false
+  state.unpause_timer              = nil
+  state.curr_sub_end               = {nil, nil}
+  state.curr_sub_time_length       = {nil, nil}
+  state.curr_sub_text_length       = {nil, nil}
+  state.last_sub_start_time        = {nil, nil}
+  state.last_pause_time_pos        = {nil, nil}
+  state.last_pause_sub_pos         = {nil, nil}
+  state.pause_at_sub_end           = {false, false}
+  state.replay_on_unpause          = {false, false}
+  state.last_message_time_ts       = 0
+  state.last_message_duration_secs = 0
 end
 
 local function deinit()
@@ -566,8 +577,7 @@ local function handle_toggle_pressed()
     state.enabled = true -- NOTE: Don't move this outside the condition
     state_str = "on"
   end
-  mp.osd_message("Subtitle pause " .. state_str, 3)
-  state.skip_next_osd_clear = true -- Make sure the message is not immediately cleared
+  message("Subtitle pause " .. state_str, 3)
 end
 
 local function handle_override_binding(info)
