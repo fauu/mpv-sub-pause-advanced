@@ -142,7 +142,6 @@ end
 --- VARIOUS UTILITIES ------------------------------------------------------------------------------
 
 local function set_sub_visibility(sub_track, visible)
-  -- NOTE: Limitation: Hiding primary sub also hides secondary sub
   mp.set_property_bool(sub_track_property(sub_track, "sub-visibility"), visible)
 end
 
