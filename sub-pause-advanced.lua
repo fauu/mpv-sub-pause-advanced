@@ -143,6 +143,7 @@ end
 
 local function set_sub_visibility(sub_track, visible)
   mp.set_property_bool(sub_track_property(sub_track, "sub-visibility"), visible)
+  mp.osd_message(" ", 0.001) -- Force redraw
 end
 
 local function seek_to_current_or_last_sub_start(sub_track)
