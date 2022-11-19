@@ -143,7 +143,10 @@ end
 
 local function set_sub_visibility(sub_track, visible)
   mp.set_property_bool(sub_track_property(sub_track, "sub-visibility"), visible)
-  mp.osd_message(" ", 0.001) -- Force redraw
+  if not state.skip_next_osd_clear then
+    mp.osd_message(" ", 0.001) -- Force redraw
+    state.skip_next_osd_clear = false
+  end
 end
 
 local function seek_to_current_or_last_sub_start(sub_track)
@@ -470,8 +473,9 @@ local function init_state()
     last_sub_start_time  = {nil, nil},
     last_pause_time_pos  = {nil, nil},
     last_pause_sub_pos   = {nil, nil},
-    pause_at_sub_end     =  {false, false},
-    replay_on_unpause    = {false, false}
+    pause_at_sub_end     = {false, false},
+    replay_on_unpause    = {false, false},
+    skip_next_osd_clear  = false,
   }
 end
 
@@ -488,6 +492,7 @@ local function reset_state()
   state.last_pause_sub_pos   = {nil, nil}
   state.pause_at_sub_end     = {false, false}
   state.replay_on_unpause    = {false, false}
+  state.skip_next_osd_clear  = false
 end
 
 local function deinit()
@@ -562,6 +567,7 @@ local function handle_toggle_pressed()
     state_str = "on"
   end
   mp.osd_message("Subtitle pause " .. state_str, 3)
+  state.skip_next_osd_clear = true -- Make sure the message is not immediately cleared
 end
 
 local function handle_override_binding(info)
